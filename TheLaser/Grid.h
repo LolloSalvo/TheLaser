@@ -1,4 +1,9 @@
 #pragma once
+#include "Cell.h"
+#include "Mirror.h"
+
+#include <vector>
+
 class Grid
 {
 public:
@@ -9,9 +14,16 @@ public:
 	int GetIndex(int row, int col) const;
 
 	int GetRows() const;
-	int getColumns() const;
+	int GetColumns() const;
+
+	int GetRowFromIndex(int index) const;
+	int GetColFromIndex(int index) const;
+
+	Vector2f GetCellCenter(int row, int col) const;
 
 	void Draw(const Vector2f& centerPos) const;
+
+	void AddMirror(Mirror* mirror);
 
 private:
 
@@ -20,5 +32,8 @@ private:
 
 	float m_CellSize{};
 
+	std::vector<Cell*> m_pCells{};
+
+	std::vector<Mirror*> m_pMirrors{};
 };
 

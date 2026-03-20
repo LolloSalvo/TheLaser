@@ -2,7 +2,9 @@
 #include "BaseGame.h"
 
 #include "Grid.h"
+#include "Mirror.h"
 
+#include <vector>
 
 class Game : public BaseGame
 {
@@ -36,5 +38,5 @@ private:
 
 	Grid* m_Grid = new Grid{ 10, 10, 50.f };
 
-
+	
 };
