@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Game.h"
 
+#include <iostream>
+
 Game::Game( const Window& window ) 
 	:BaseGame{ window }
 {
@@ -40,6 +42,8 @@ void Game::Draw( ) const
 {
 	ClearBackground( );
 	m_Grid->Draw(m_Center);
+
+
 }
 
 void Game::ProcessKeyDownEvent( const SDL_KeyboardEvent & e )
@@ -72,19 +76,14 @@ void Game::ProcessMouseMotionEvent( const SDL_MouseMotionEvent& e )
 
 void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
 {
-	//std::cout << "MOUSEBUTTONDOWN event: ";
-	//switch ( e.button )
-	//{
-	//case SDL_BUTTON_LEFT:
-	//	std::cout << " left button " << std::endl;
-	//	break;
-	//case SDL_BUTTON_RIGHT:
-	//	std::cout << " right button " << std::endl;
-	//	break;
-	//case SDL_BUTTON_MIDDLE:
-	//	std::cout << " middle button " << std::endl;
-	//	break;
-	//}
+
+	switch (e.button)
+	{
+	case SDL_BUTTON_LEFT:
+		
+		std::cout << m_Grid->GetCellIndexFromPosition(Vector2f{ static_cast<float>(e.x), static_cast<float>(e.y) }, m_Center) << std::endl;
+		break;
+	}
 	
 }
 
@@ -109,4 +108,9 @@ void Game::ClearBackground( ) const
 {
 	glClearColor( 0.0f, 0.0f, 0.3f, 1.0f );
 	glClear( GL_COLOR_BUFFER_BIT );
+}
+
+Vector2f Game::GetSecondPointLaser(const Vector2f& firstPoint, const Vector2f& laserDirection)
+{
+	
 }

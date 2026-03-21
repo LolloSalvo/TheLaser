@@ -65,3 +65,22 @@ void Grid::Draw(const Vector2f& centerPos) const
 	}
 }
 
+int Grid::GetCellIndexFromPosition(const Vector2f& position, const Vector2f& centerPos) const
+{
+
+	float totalWidth = m_Columns * m_CellSize;
+	float totalHeight = m_Rows * m_CellSize;
+
+	const Vector2f offset{ centerPos.x - (totalWidth / 2.0f), centerPos.y - (totalHeight / 2.0f) };
+	
+	int col = static_cast<int>((position.x - offset.x) / m_CellSize);
+	int row = static_cast<int>((position.y - offset.y) / m_CellSize);
+	
+	if (col < 0 || col >= m_Columns || row < 0 || row >= m_Rows)
+	{
+		return -1; // Out of bounds
+	}
+	return GetIndex(row, col);
+	
+}
+

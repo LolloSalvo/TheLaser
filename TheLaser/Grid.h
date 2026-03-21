@@ -25,6 +25,8 @@ public:
 
 	void AddMirror(Mirror* mirror);
 
+	int GetCellIndexFromPosition(const Vector2f& position, const Vector2f& centerPos) const;
+
 private:
 
 	int m_Rows{};

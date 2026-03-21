@@ -1,4 +1,6 @@
 #pragma once
+#include "Mirror.h"
+
 class Cell
 {
 public:
@@ -8,9 +10,15 @@ public:
 
 	void Draw(const Vector2f& offset) const;
 
+	Rectf GetBoundaries() const;
+
+	void SetMirror(Mirror* mirror);
+
 private:
 
 	Rectf m_Boundaries{};
+
+	Mirror* m_pMirror{};
 
 };
 
