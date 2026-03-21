@@ -24,7 +24,7 @@ void Game::Initialize( )
 	m_Grid->AddMirror(3, 0);
 	m_Grid->AddMirror(3, 7);
 	m_Grid->AddMirror(7, 7);
-	m_Grid->AddMirror(7, 9);
+	m_Grid->AddMirror(7, 8);
 }
 
 void Game::Cleanup( )
@@ -110,6 +110,9 @@ void Game::ClearBackground( ) const
 
 void Game::CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirection)
 {
+	m_Laser->ClearPath();
+	m_Laser->AddPoint(firstPoint);
+
 	const float step{ 10.f };
 
 	Vector2f currentFirstPoint{ firstPoint };
@@ -128,7 +131,7 @@ void Game::CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirecti
 
 			if (pCurrentCell->GetMirrorPoint(mirrorFirstPoint, mirrorSecondPoint))
 			{
-				if (utils::Raycast(std::vector<Vector2f>{mirrorFirstPoint, mirrorSecondPoint}, firstPoint, secondPoint, hitInfo))
+				if (utils::Raycast(std::vector<Vector2f>{mirrorFirstPoint, mirrorSecondPoint}, currentFirstPoint, secondPoint, hitInfo))
 				{
 					m_Laser->AddPoint(hitInfo.intersectPoint);
 					laserDirection = laserDirection.Reflect(hitInfo.normal);

@@ -37,7 +37,7 @@ private:
 
 	const Vector2f m_Center{ BaseGame::GetViewPort().width * 0.5f, BaseGame::GetViewPort().height * 0.5f };
 
-	Grid* m_Grid{ new Grid{ 10, 10, 50.f, m_Center } };
+	Grid* m_Grid{ new Grid{ 12, 12, 40.f, m_Center } };
 
 	std::vector<Vector2f> m_BoundaryPoints{ 
 		Vector2f{0.f, 0.f},

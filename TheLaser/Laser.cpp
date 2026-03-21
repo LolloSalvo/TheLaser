@@ -22,3 +22,8 @@ void Laser::AddPoint(const Vector2f& point)
 {
 	m_pLaserPoints.push_back(point);
 }
+
+void Laser::ClearPath()
+{
+	m_pLaserPoints.clear();
+}
