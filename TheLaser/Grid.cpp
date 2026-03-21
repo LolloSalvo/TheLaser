@@ -3,21 +3,31 @@
 
 #include "utils.h"
 
-Grid::Grid(int rows, int cols, float cellSize)
+Grid::Grid(int cols, int rows, float cellSize, const Vector2f& center)
 	: m_Rows{ rows }
 	, m_Columns{ cols }
 	, m_CellSize{ cellSize }
 {
+	float totalWidth{ m_Columns * m_CellSize };
+	float totalHeight{ m_Rows * m_CellSize };
+
+	float startX{ center.x - (totalWidth / 2) };
+	float startY{ center.y - (totalHeight / 2) };
+
+	//const Vector2f offset{ center.x - (totalWidth / 2.0f), center.y - (totalHeight / 2.0f) };
+
 	for (int indexRow{}; indexRow < m_Rows; ++indexRow)
 	{
 		for (int indexCol{}; indexCol < m_Columns; ++indexCol)
 		{
-			m_pCells.push_back(new Cell{ GetCellCenter(indexRow, indexCol), m_CellSize });
+			Vector2f cellPosition{ startX + (indexCol * m_CellSize), startY + (indexRow * m_CellSize) };
+
+			m_pCells.push_back(new Cell{GetIndex(indexCol, indexRow), cellPosition, cellSize });
 		}
 	}
 }
 
-int Grid::GetIndex(int row, int col) const
+int Grid::GetIndex(int col, int row) const
 {
 	return row * m_Columns + col;
 }
@@ -32,6 +42,11 @@ int Grid::GetColumns() const
 	return m_Columns;
 }
 
+float Grid::GetCellSize() const
+{
+	return m_CellSize;
+}
+
 int Grid::GetRowFromIndex(int index) const
 {
 	return index / m_Columns;
@@ -42,45 +57,68 @@ int Grid::GetColFromIndex(int index) const
 	return index % m_Columns;
 }
 
-Vector2f Grid::GetCellCenter(int row, int col) const
+Vector2f Grid::GetCellCenter(int col, int row) const
 {
-	return Vector2f{ col * m_CellSize + m_CellSize / 2, row * m_CellSize + m_CellSize / 2 };
+	return Vector2f{ m_pCells[GetIndex(col, row)]->GetBoundaries().left, m_pCells[GetIndex(col, row)]->GetBoundaries().bottom };
+	//return Vector2f{ col * m_CellSize + m_CellSize / 2, row * m_CellSize + m_CellSize / 2 };
 }
 
-void Grid::Draw(const Vector2f& centerPos) const
+void Grid::Draw() const
 {
-	float totalWidth = m_Columns * m_CellSize;
-	float totalHeight = m_Rows * m_CellSize;
-
-	const Vector2f offset{ centerPos.x - (totalWidth / 2.0f), centerPos.y - (totalHeight / 2.0f)};
-
-	Color4f white{ 1.f, 1.f, 1.f, 1.f };
-
-	utils::SetColor(white);
-
-	
 	for(Cell* cell : m_pCells)
 	{
-		cell->Draw(offset);
+		cell->Draw();
 	}
 }
 
 int Grid::GetCellIndexFromPosition(const Vector2f& position, const Vector2f& centerPos) const
 {
+	float totalWidth{ m_Columns * m_CellSize };
+	float totalHeight{ m_Rows * m_CellSize };
 
-	float totalWidth = m_Columns * m_CellSize;
-	float totalHeight = m_Rows * m_CellSize;
+	float startX{ centerPos.x - (totalWidth / 2) };
+	float startY{ centerPos.y - (totalHeight / 2) };
+	
+	int col = static_cast<int>((position.x - startX) / m_CellSize);
+	int row = static_cast<int>((position.y - startY) / m_CellSize);
 
-	const Vector2f offset{ centerPos.x - (totalWidth / 2.0f), centerPos.y - (totalHeight / 2.0f) };
-	
-	int col = static_cast<int>((position.x - offset.x) / m_CellSize);
-	int row = static_cast<int>((position.y - offset.y) / m_CellSize);
-	
 	if (col < 0 || col >= m_Columns || row < 0 || row >= m_Rows)
 	{
 		return -1; // Out of bounds
 	}
-	return GetIndex(row, col);
+	return GetIndex(col, row);
 	
 }
 
+Cell* Grid::GetCellFromPosition(const Vector2f& position, const Vector2f& centerPos) const
+{
+	float totalWidth{ m_Columns * m_CellSize };
+	float totalHeight{ m_Rows * m_CellSize };
+
+	float startX{ centerPos.x - (totalWidth / 2) };
+	float startY{ centerPos.y - (totalHeight / 2) };
+
+	int col = static_cast<int>((position.x - startX) / m_CellSize);
+	int row = static_cast<int>((position.y - startY) / m_CellSize);
+
+	if (col < 0 || col >= m_Columns || row < 0 || row >= m_Rows)
+	{
+		return nullptr; // Out of bounds
+	}
+	return m_pCells[GetIndex(col, row)];
+}
+
+Cell* Grid::GetCellFromIndex(int index)
+{
+	return m_pCells[index];
+}
+
+Cell* Grid::GetCellFromIndex(int col, int row)
+{
+	return m_pCells[GetIndex(col, row)];
+}
+
+void Grid::AddMirror( int col, int row)
+{
+	m_pCells[GetIndex(col, row)]->SetMirror(new Mirror{ m_pCells[GetIndex(col, row)]->GetBoundaries() });
+}

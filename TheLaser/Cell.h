@@ -5,20 +5,26 @@ class Cell
 {
 public:
 
-	Cell(const Vector2f& position, const float cellSize);
+	Cell(int index, const Vector2f& position, const float cellSize);
 	~Cell() = default;
 
-	void Draw(const Vector2f& offset) const;
+	void Draw() const;
 
 	Rectf GetBoundaries() const;
 
 	void SetMirror(Mirror* mirror);
+
+	bool HasMirror() const;
+
+	bool GetMirrorPoint(Vector2f& p1Out, Vector2f& p2Out);
 
 private:
 
 	Rectf m_Boundaries{};
 
 	Mirror* m_pMirror{};
+
+	int m_Index{};
 
 };
 

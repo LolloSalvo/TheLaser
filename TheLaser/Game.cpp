@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Game.h"
+#include "utils.h"
 
 #include <iostream>
 
@@ -17,7 +18,13 @@ Game::~Game( )
 
 void Game::Initialize( )
 {
-	
+	m_LaserStartPoint = Vector2f{ m_Grid->GetCellCenter(0, 0).x - m_Grid->GetCellSize() / 2, m_Grid->GetCellCenter(0, 0).y + m_Grid->GetCellSize() / 2 };
+	m_Laser->AddPoint(m_LaserStartPoint);
+
+	m_Grid->AddMirror(3, 0);
+	m_Grid->AddMirror(3, 7);
+	m_Grid->AddMirror(7, 7);
+	m_Grid->AddMirror(7, 9);
 }
 
 void Game::Cleanup( )
@@ -26,24 +33,15 @@ void Game::Cleanup( )
 
 void Game::Update( float elapsedSec )
 {
-	// Check keyboard state
-	//const Uint8 *pStates = SDL_GetKeyboardState( nullptr );
-	//if ( pStates[SDL_SCANCODE_RIGHT] )
-	//{
-	//	std::cout << "Right arrow key is down\n";
-	//}
-	//if ( pStates[SDL_SCANCODE_LEFT] && pStates[SDL_SCANCODE_UP])
-	//{
-	//	std::cout << "Left and up arrow keys are down\n";
-	//}
+	CalculateLaserPath(m_LaserStartPoint, m_LaserDirection);
 }
 
 void Game::Draw( ) const
 {
 	ClearBackground( );
-	m_Grid->Draw(m_Center);
+	m_Grid->Draw();
 
-
+	m_Laser->Draw();
 }
 
 void Game::ProcessKeyDownEvent( const SDL_KeyboardEvent & e )
@@ -106,11 +104,43 @@ void Game::ProcessMouseUpEvent( const SDL_MouseButtonEvent& e )
 
 void Game::ClearBackground( ) const
 {
-	glClearColor( 0.0f, 0.0f, 0.3f, 1.0f );
+	glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
 	glClear( GL_COLOR_BUFFER_BIT );
 }
 
-Vector2f Game::GetSecondPointLaser(const Vector2f& firstPoint, const Vector2f& laserDirection)
+void Game::CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirection)
 {
-	
+	const float step{ 10.f };
+
+	Vector2f currentFirstPoint{ firstPoint };
+	Vector2f secondPoint{ firstPoint };
+	utils::HitInfo hitInfo{};
+
+	while (!utils::Raycast(m_BoundaryPoints, currentFirstPoint, secondPoint, hitInfo))
+	{
+		secondPoint += Vector2f{ step * laserDirection.x, step * laserDirection.y };
+
+		Cell* pCurrentCell{ m_Grid->GetCellFromPosition(secondPoint, m_Center) };
+		if (pCurrentCell != nullptr && pCurrentCell->HasMirror())
+		{
+			Vector2f mirrorFirstPoint{};
+			Vector2f mirrorSecondPoint{};
+
+			if (pCurrentCell->GetMirrorPoint(mirrorFirstPoint, mirrorSecondPoint))
+			{
+				if (utils::Raycast(std::vector<Vector2f>{mirrorFirstPoint, mirrorSecondPoint}, firstPoint, secondPoint, hitInfo))
+				{
+					m_Laser->AddPoint(hitInfo.intersectPoint);
+					laserDirection = laserDirection.Reflect(hitInfo.normal);
+
+					currentFirstPoint = hitInfo.intersectPoint;
+					secondPoint = currentFirstPoint;
+				}
+			}
+		}
+	}
+
+	m_Laser->AddPoint(hitInfo.intersectPoint);
+
+
 }

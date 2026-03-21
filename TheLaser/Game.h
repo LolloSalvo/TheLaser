@@ -3,6 +3,7 @@
 
 #include "Grid.h"
 #include "Mirror.h"
+#include "Laser.h"
 
 #include <vector>
 
@@ -36,17 +37,19 @@ private:
 
 	const Vector2f m_Center{ BaseGame::GetViewPort().width * 0.5f, BaseGame::GetViewPort().height * 0.5f };
 
-	Grid* m_Grid = new Grid{ 10, 10, 50.f };
+	Grid* m_Grid{ new Grid{ 10, 10, 50.f, m_Center } };
 
 	std::vector<Vector2f> m_BoundaryPoints{ 
 		Vector2f{0.f, 0.f},
 		Vector2f{BaseGame::GetViewPort().width, 0.f},
 		Vector2f{BaseGame::GetViewPort().width, BaseGame::GetViewPort().height},
-		Vector2f{0.f, BaseGame::GetViewPort().height} 
+		Vector2f{0.f, BaseGame::GetViewPort().height}
 	};
 
 	Vector2f m_LaserDirection{ 1.f, 0.f };
-	Vector2f m_LaserStartPoint{ m_Grid->GetCellCenter(0, 0).x - 50.f, m_Grid->GetCellCenter(0,0).y };
+	Vector2f m_LaserStartPoint{};
 
-	Vector2f GetSecondPointLaser(const Vector2f& firstPoint, const Vector2f& laserDirection);
+	void CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirection);
+
+	Laser* m_Laser{ new Laser() };
 };

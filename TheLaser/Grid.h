@@ -8,24 +8,31 @@ class Grid
 {
 public:
 
-	Grid(int rows, int cols, float cellSize);
+	Grid(int rows, int cols, float cellSize, const Vector2f& center);
 	~Grid() = default;
 
-	int GetIndex(int row, int col) const;
+	int GetIndex(int col, int row) const;
 
 	int GetRows() const;
 	int GetColumns() const;
 
+	float GetCellSize() const;
+
 	int GetRowFromIndex(int index) const;
 	int GetColFromIndex(int index) const;
 
-	Vector2f GetCellCenter(int row, int col) const;
+	Vector2f GetCellCenter(int col, int row) const;
 
-	void Draw(const Vector2f& centerPos) const;
+	void Draw() const;
 
-	void AddMirror(Mirror* mirror);
+	void AddMirror(int col, int row);
 
 	int GetCellIndexFromPosition(const Vector2f& position, const Vector2f& centerPos) const;
+
+	Cell* GetCellFromPosition(const Vector2f& position, const Vector2f& centerPos) const;
+
+	Cell* GetCellFromIndex(int index);
+	Cell* GetCellFromIndex(int col, int row);
 
 private:
 
@@ -36,6 +43,5 @@ private:
 
 	std::vector<Cell*> m_pCells{};
 
-	std::vector<Mirror*> m_pMirrors{};
 };
 

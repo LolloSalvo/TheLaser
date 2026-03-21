@@ -163,6 +163,7 @@ xcopy "$(ProjectDir)Resources\*.*" "$(TargetDir)" /y /d /s</Command>
     <ClCompile Include="Cell.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Grid.cpp" />
+    <ClCompile Include="Laser.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mirror.cpp" />
     <ClCompile Include="pch.cpp" />
@@ -171,6 +172,7 @@ xcopy "$(ProjectDir)Resources\*.*" "$(TargetDir)" /y /d /s</Command>
     <ClInclude Include="Cell.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Grid.h" />
+    <ClInclude Include="Laser.h" />
     <ClInclude Include="Mirror.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
