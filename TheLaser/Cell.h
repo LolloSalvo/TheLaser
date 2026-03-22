@@ -14,7 +14,8 @@ public:
 
 	void SetMirror(Mirror* mirror);
 	void DeleteMirror();
-	void RotateMirror(const Rectf& boundaries);
+	void RotateMirror();
+	MirrorType GetMirrorType() const;
 
 	bool HasMirror() const;
 

@@ -62,12 +62,17 @@ bool Cell::GetMirrorPoint(Vector2f& p1Out, Vector2f& p2Out)
 	return false;
 }
 
-void Cell::RotateMirror(const Rectf& boundaries)
+void Cell::RotateMirror()
 {
 	if (this->HasMirror())
 	{
-		m_pMirror->RotateMirror(boundaries);
+		m_pMirror->RotateMirror();
 	}
+}
+
+MirrorType Cell::GetMirrorType() const
+{
+	return m_pMirror->GetType();
 }
 
 

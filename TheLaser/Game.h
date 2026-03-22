@@ -4,6 +4,7 @@
 #include "Grid.h"
 #include "Mirror.h"
 #include "Laser.h"
+#include "LevelGenerator.h"
 
 #include <vector>
 
@@ -35,13 +36,13 @@ private:
 	void Cleanup( );
 	void ClearBackground( ) const;
 
-	enum class StartingPosition
+	enum class GameState
 	{
-		BottomLeft,
-		BottomRight,
-		TopLeft,
-		TopRight
+		Playing,
+		Victory
 	};
+
+	GameState m_GameState{};
 
 	StartingPosition m_StartPosition{};
 
@@ -61,12 +62,13 @@ private:
 
 	Laser* m_Laser{ new Laser() };
 	
-	
+	LevelGenerator m_LevelGenerator{};
+
 	//Functions
 
 	void ChooseRandomStartPosition();
 	
 	void CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirection);
-	void CreateMirrorPath(int numberOfStep);
+	
 
 };

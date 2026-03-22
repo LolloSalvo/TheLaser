@@ -29,6 +29,7 @@ public:
 	void RemoveMirror(int col, int row);
 	void AddRemoveMirrorAt(const Vector2f& position, const Vector2f& centerPos);
 	void RotateMirrorAt(const Vector2f& position, const Vector2f& centerPos);
+	void AddReceiver(int col, int row);
 
 	int GetCellIndexFromPosition(const Vector2f& position, const Vector2f& centerPos) const;
 

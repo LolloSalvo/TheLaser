@@ -2,21 +2,24 @@
 #include "Mirror.h"
 #include "utils.h"
 
-Mirror::Mirror(const Rectf& cellBound)
+Mirror::Mirror(const Rectf& cellBoundaries, MirrorType type)
+	: m_Boundaries{ cellBoundaries }
+	, m_Type{ type }
 {
-	float offset{ cellBound.width / 10.f };
+	float offset = m_Boundaries.width / 10.0f;
+	int randomOrientation = rand() % 2;
 
-	if(rand() % 2 == 0)
+	if (randomOrientation == 0)
 	{
-		m_Type = MirrorType::BackSlash;
-		m_FirstPoint = Vector2f{ cellBound.left + offset, cellBound.bottom + offset };
-		m_SecondPoint = Vector2f{ cellBound.left + cellBound.width - offset, cellBound.bottom + cellBound.height - offset };
+		m_Orientation = MirrorOrientation::BackSlash;
+		m_FirstPoint = Vector2f{ m_Boundaries.left + offset, m_Boundaries.bottom + offset };
+		m_SecondPoint = Vector2f{ m_Boundaries.left + m_Boundaries.width - offset, m_Boundaries.bottom + m_Boundaries.height - offset };
 	}
 	else
 	{
-		m_Type = MirrorType::ForwardSlash;
-		m_FirstPoint = Vector2f{ cellBound.left + offset, cellBound.bottom + cellBound.height - offset };
-		m_SecondPoint = Vector2f{ cellBound.left + cellBound.width - offset, cellBound.bottom + offset };
+		m_Orientation = MirrorOrientation::ForwardSlash;
+		m_FirstPoint = Vector2f{ m_Boundaries.left + offset, m_Boundaries.bottom + m_Boundaries.height - offset };
+		m_SecondPoint = Vector2f{ m_Boundaries.left + m_Boundaries.width - offset, m_Boundaries.bottom + offset };
 	}
 }
 
@@ -30,26 +33,55 @@ Vector2f Mirror::GetSecondPoint() const
 	return m_SecondPoint;
 }
 
-void Mirror::Draw() const
+MirrorType Mirror::GetType() const
 {
-	utils::DrawLine(m_FirstPoint, m_SecondPoint);
+	return m_Type;
 }
 
-void Mirror::RotateMirror(const Rectf& boundaries)
+void Mirror::Draw() const
 {
-	float offset{ boundaries.width / 10.f };
-
-	if (m_Type == MirrorType::BackSlash)
+	if (m_Type == MirrorType::Reflector)
 	{
-		m_Type = MirrorType::ForwardSlash;
-		m_FirstPoint = Vector2f{ boundaries.left + offset, boundaries.bottom + boundaries.height - offset };
-		m_SecondPoint = Vector2f{ boundaries.left + boundaries.width - offset, boundaries.bottom + offset };
+		utils::SetColor(Color4f{ 0.0f, 0.8f, 1.0f, 1.0f });
+		utils::DrawLine(m_FirstPoint, m_SecondPoint, 2.0f);
+	}
+	else if (m_Type == MirrorType::Receiver)
+	{
+		utils::SetColor(Color4f{ 0.0f, 1.0f, 0.0f, 1.0f });
+	}
+	else if (m_Type == MirrorType::Splitter)
+	{
+		utils::SetColor(Color4f{ 1.0f, 0.0f, 1.0f, 1.0f });
+		utils::DrawLine(m_FirstPoint, m_SecondPoint, 2.0f);
 	}
 	else
 	{
-		m_Type = MirrorType::BackSlash;
-		m_FirstPoint = Vector2f{ boundaries.left + offset, boundaries.bottom + offset };
-		m_SecondPoint = Vector2f{ boundaries.left + boundaries.width - offset, boundaries.bottom + boundaries.height - offset };
+		utils::SetColor(Color4f{ 1.0f, 1.0f, 1.0f, 1.0f });
+		utils::DrawLine(m_FirstPoint, m_SecondPoint, 2.0f);
 	}
+
 	
+
+	if (m_Type == MirrorType::Receiver)
+	{
+		utils::FillEllipse(Vector2f{ m_Boundaries.left + m_Boundaries.width / 2, m_Boundaries.bottom + m_Boundaries.height / 2 }, m_Boundaries.width / 2, m_Boundaries.height / 2);
+	}
+}
+
+void Mirror::RotateMirror()
+{
+	float offset = m_Boundaries.width / 10.0f;
+
+	if (m_Orientation == MirrorOrientation::BackSlash)
+	{
+		m_Orientation = MirrorOrientation::ForwardSlash;
+		m_FirstPoint = Vector2f{ m_Boundaries.left + offset, m_Boundaries.bottom + m_Boundaries.height - offset };
+		m_SecondPoint = Vector2f{ m_Boundaries.left + m_Boundaries.width - offset, m_Boundaries.bottom + offset };
+	}
+	else
+	{
+		m_Orientation = MirrorOrientation::BackSlash;
+		m_FirstPoint = Vector2f{ m_Boundaries.left + offset, m_Boundaries.bottom + offset };
+		m_SecondPoint = Vector2f{ m_Boundaries.left + m_Boundaries.width - offset, m_Boundaries.bottom + m_Boundaries.height - offset };
+	}
 }
