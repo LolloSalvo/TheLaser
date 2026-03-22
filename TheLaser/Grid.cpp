@@ -42,11 +42,6 @@ int Grid::GetColumns() const
 	return m_Columns;
 }
 
-float Grid::GetCellSize() const
-{
-	return m_CellSize;
-}
-
 int Grid::GetRowFromIndex(int index) const
 {
 	return index / m_Columns;
@@ -59,8 +54,16 @@ int Grid::GetColFromIndex(int index) const
 
 Vector2f Grid::GetCellCenter(int col, int row) const
 {
-	return Vector2f{ m_pCells[GetIndex(col, row)]->GetBoundaries().left, m_pCells[GetIndex(col, row)]->GetBoundaries().bottom };
+	return Vector2f{ 
+		m_pCells[GetIndex(col, row)]->GetBoundaries().left + m_CellSize / 2,
+		m_pCells[GetIndex(col, row)]->GetBoundaries().bottom + m_CellSize / 2
+	};
 	//return Vector2f{ col * m_CellSize + m_CellSize / 2, row * m_CellSize + m_CellSize / 2 };
+}
+
+float Grid::GetCellSize() const
+{
+	return m_CellSize;
 }
 
 void Grid::Draw() const
@@ -122,3 +125,38 @@ void Grid::AddMirror( int col, int row)
 {
 	m_pCells[GetIndex(col, row)]->SetMirror(new Mirror{ m_pCells[GetIndex(col, row)]->GetBoundaries() });
 }
+
+void Grid::RemoveMirror(int col, int row)
+{
+	m_pCells[GetIndex(col, row)]->DeleteMirror();
+}
+
+void Grid::AddRemoveMirrorAt(const Vector2f& position, const Vector2f& centerPos)
+{
+	Cell* currentCell{ GetCellFromPosition(position, centerPos) };
+
+	if (currentCell != nullptr)
+	{
+		if (currentCell->HasMirror())
+		{
+			currentCell->DeleteMirror();
+		}
+		else
+		{
+			currentCell->SetMirror(new Mirror{ currentCell->GetBoundaries() });
+		}
+	}
+	
+}
+
+void Grid::RotateMirrorAt(const Vector2f& position, const Vector2f& centerPos)
+{
+	Cell* currentCell{ GetCellFromPosition(position, centerPos) };
+
+	if (currentCell != nullptr && currentCell->HasMirror())
+	{
+		currentCell->RotateMirror(currentCell->GetBoundaries());
+	}
+}
+
+

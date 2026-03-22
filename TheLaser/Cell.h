@@ -13,10 +13,13 @@ public:
 	Rectf GetBoundaries() const;
 
 	void SetMirror(Mirror* mirror);
+	void DeleteMirror();
+	void RotateMirror(const Rectf& boundaries);
 
 	bool HasMirror() const;
 
 	bool GetMirrorPoint(Vector2f& p1Out, Vector2f& p2Out);
+
 
 private:
 

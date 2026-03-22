@@ -34,6 +34,12 @@ void Cell::SetMirror(Mirror* mirror)
 	m_pMirror = mirror;
 }
 
+void Cell::DeleteMirror()
+{
+	delete m_pMirror;
+	m_pMirror = nullptr;
+}
+
 bool Cell::HasMirror() const
 {
 	if (m_pMirror != nullptr)
@@ -54,6 +60,14 @@ bool Cell::GetMirrorPoint(Vector2f& p1Out, Vector2f& p2Out)
 	}
 
 	return false;
+}
+
+void Cell::RotateMirror(const Rectf& boundaries)
+{
+	if (this->HasMirror())
+	{
+		m_pMirror->RotateMirror(boundaries);
+	}
 }
 
 

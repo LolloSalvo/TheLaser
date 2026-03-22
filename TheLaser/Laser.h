@@ -5,13 +5,7 @@ class Laser
 {
 public:
 
-	enum class StartingPosition
-	{
-		bottomLeft,
-		bottomRight,
-		TopLeft,
-		TopRight
-	};
+	
 
 	Laser();
 	~Laser() = default;

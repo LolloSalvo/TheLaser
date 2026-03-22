@@ -35,6 +35,16 @@ private:
 	void Cleanup( );
 	void ClearBackground( ) const;
 
+	enum class StartingPosition
+	{
+		BottomLeft,
+		BottomRight,
+		TopLeft,
+		TopRight
+	};
+
+	StartingPosition m_StartPosition{};
+
 	const Vector2f m_Center{ BaseGame::GetViewPort().width * 0.5f, BaseGame::GetViewPort().height * 0.5f };
 
 	Grid* m_Grid{ new Grid{ 12, 12, 40.f, m_Center } };
@@ -49,7 +59,14 @@ private:
 	Vector2f m_LaserDirection{ 1.f, 0.f };
 	Vector2f m_LaserStartPoint{};
 
-	void CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirection);
-
 	Laser* m_Laser{ new Laser() };
+	
+	
+	//Functions
+
+	void ChooseRandomStartPosition();
+	
+	void CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirection);
+	void CreateMirrorPath(int numberOfStep);
+
 };
