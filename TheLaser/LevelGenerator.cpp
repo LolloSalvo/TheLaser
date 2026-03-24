@@ -3,31 +3,32 @@
 
 void LevelGenerator::GeneratePath(Grid* grid, StartingPosition startPosition, Vector2f laserDirection, int numMirrors)
 {
-	int minimumDistance = 2;
-	int numDecoys = 7;
+	int minimumDistance{ 2 };
+	int numDecoys{ 7 };
 
-	bool pathGenerated = false;
-	int totalColumns = grid->GetColumns();
-	int totalRows = grid->GetRows();
+	bool pathGenerated{ false };
+	int totalColumns{ grid->GetColumns() };
+	int totalRows{ grid->GetRows() };
 
 	while (!pathGenerated)
 	{
 		ClearAllMirrors(grid);
 		std::vector<bool> visitedCells(totalColumns * totalRows, false);
 
-		int currentColumn = 0;
-		int currentRow = 0;
+		int currentColumn{ 0 };
+		int currentRow{ 0 };
 		SetupStartingPosition(grid, startPosition, currentColumn, currentRow);
 
-		int directionX = static_cast<int>(laserDirection.x);
+		int directionX{ static_cast<int>(laserDirection.x) };
 		
-		int directionY = static_cast<int>(laserDirection.y);
+		int directionY{ static_cast<int>(laserDirection.y) };
 
-		bool isTrapped = false;
+		bool isTrapped{ false };
 
-		for (int i = 0; i < numMirrors; ++i)
+		for (int index{}; index < numMirrors; ++index)
 		{
 			int maxDistance = GetMaximumDistance(grid, currentColumn, currentRow, directionX, directionY, visitedCells);
+
 
 			if (maxDistance < minimumDistance)
 			{
@@ -37,12 +38,12 @@ void LevelGenerator::GeneratePath(Grid* grid, StartingPosition startPosition, Ve
 
 			}
 
-			int range = maxDistance - minimumDistance + 1;
-			int stepsToTake = minimumDistance + (rand() % range);
+			int range{ maxDistance - minimumDistance + 1 };
+			int stepsToTake{ minimumDistance + (rand() % range) };
 
-			for (int step = 0; step < stepsToTake; ++step)
+			for (int step{}; step < stepsToTake; ++step)
 			{
-				int currentIndex = currentRow * totalColumns + currentColumn;
+				int currentIndex{ currentRow * totalColumns + currentColumn };
 				visitedCells[currentIndex] = true;
 
 				currentColumn = currentColumn + directionX;
@@ -51,10 +52,10 @@ void LevelGenerator::GeneratePath(Grid* grid, StartingPosition startPosition, Ve
 			}
 
 
-			int finalIndex = currentRow * totalColumns + currentColumn;
+			int finalIndex{ currentRow * totalColumns + currentColumn };
 			visitedCells[finalIndex] = true;
 
-			if (i == (numMirrors - 1))
+			if (index == (numMirrors - 1))
 			{
 				grid->AddReceiver(currentColumn, currentRow);
 			}
@@ -63,7 +64,7 @@ void LevelGenerator::GeneratePath(Grid* grid, StartingPosition startPosition, Ve
 				grid->AddMirror(currentColumn, currentRow);
 			}
 
-			if (i < (numMirrors - 1))
+			if (index < (numMirrors - 1))
 			{
 				if (!TryGetNewDirection(grid, currentColumn, currentRow, directionX, directionY, visitedCells, directionX, directionY))
 				{
@@ -88,12 +89,12 @@ void LevelGenerator::GeneratePath(Grid* grid, StartingPosition startPosition, Ve
 
 void LevelGenerator::ClearAllMirrors(Grid* grid)
 {
-	int totalColumns = grid->GetColumns();
-	int totalRows = grid->GetRows();
+	int totalColumns{ grid->GetColumns() };
+	int totalRows{ grid->GetRows() };
 
-	for (int row = 0; row < totalRows; ++row)
+	for (int row{}; row < totalRows; ++row)
 	{
-		for (int column = 0; column < totalColumns; ++column)
+		for (int column{}; column < totalColumns; ++column)
 		{
 			if (grid->GetCellFromIndex(column, row)->HasMirror())
 			{
@@ -129,16 +130,16 @@ void LevelGenerator::SetupStartingPosition(Grid* grid, StartingPosition startPos
 
 int LevelGenerator::GetMaximumDistance(Grid* grid, int currentColumn, int currentRow, int directionX, int directionY, const std::vector<bool>& visitedCells)
 {
-	int maxDistance = 0;
-	int totalColumns = grid->GetColumns();
-	int totalRows = grid->GetRows();
+	int maxDistance{ 0 };
+	int totalColumns{ grid->GetColumns() };
+	int totalRows{ grid->GetRows() };
 
-	int checkColumn = currentColumn + directionX;
-	int checkRow = currentRow + directionY;
+	int checkColumn{ currentColumn + directionX };
+	int checkRow{ currentRow + directionY };
 
 	while (checkColumn >= 0 && checkColumn < totalColumns && checkRow >= 0 && checkRow < totalRows)
 	{
-		int cellIndex = checkRow * totalColumns + checkColumn;
+		int cellIndex{ checkRow * totalColumns + checkColumn };
 
 		if (visitedCells[cellIndex])
 		{
@@ -155,34 +156,36 @@ int LevelGenerator::GetMaximumDistance(Grid* grid, int currentColumn, int curren
 
 bool LevelGenerator::TryGetNewDirection(Grid* grid, int currentColumn, int currentRow, int previousDirectionX, int previousDirectionY, const std::vector<bool>& visitedCells, int& newDirectionX, int& newDirectionY)
 {
-	int totalColumns = grid->GetColumns();
-	int totalRows = grid->GetRows();
+	int totalColumns{ grid->GetColumns() };
+	int totalRows{ grid->GetRows() };
 
-	int turnLeftX = -previousDirectionY;
-	int turnLeftY = previousDirectionX;
-	int turnRightX = previousDirectionY;
-	int turnRightY = -previousDirectionX;
+	int turnLeftX{ -previousDirectionY };
+	int turnLeftY{ previousDirectionX };
+	int turnRightX{ previousDirectionY };
+	int turnRightY{ -previousDirectionX };
 
-	bool canTurnLeft = false;
-	int leftColumn = currentColumn + turnLeftX;
-	int leftRow = currentRow + turnLeftY;
+	bool canTurnLeft{ false };
+	
+	
+	int leftColumn{ currentColumn + turnLeftX };
+	int leftRow{ currentRow + turnLeftY };
 
 	if (leftColumn >= 0 && leftColumn < totalColumns && leftRow >= 0 && leftRow < totalRows)
 	{
-		int leftIndex = leftRow * totalColumns + leftColumn;
+		int leftIndex{ leftRow * totalColumns + leftColumn };
 		if (!visitedCells[leftIndex])
 		{
 			canTurnLeft = true;
 		}
 	}
 
-	bool canTurnRight = false;
-	int rightColumn = currentColumn + turnRightX;
-	int rightRow = currentRow + turnRightY;
+	bool canTurnRight{ false };
+	int rightColumn{ currentColumn + turnRightX };
+	int rightRow{ currentRow + turnRightY };
 
 	if (rightColumn >= 0 && rightColumn < totalColumns && rightRow >= 0 && rightRow < totalRows)
 	{
-		int rightIndex = rightRow * totalColumns + rightColumn;
+		int rightIndex{ rightRow * totalColumns + rightColumn };
 		if (!visitedCells[rightIndex])
 		{
 			canTurnRight = true;
@@ -191,6 +194,7 @@ bool LevelGenerator::TryGetNewDirection(Grid* grid, int currentColumn, int curre
 
 	if (canTurnLeft && canTurnRight)
 	{
+
 		if (rand() % 2 == 0)
 		{
 			newDirectionX = turnLeftX;
@@ -221,15 +225,15 @@ bool LevelGenerator::TryGetNewDirection(Grid* grid, int currentColumn, int curre
 
 bool LevelGenerator::IsFinalPathTrapped(Grid* grid, int currentColumn, int currentRow, int directionX, int directionY, const std::vector<bool>& visitedCells)
 {
-	int totalColumns = grid->GetColumns();
-	int totalRows = grid->GetRows();
+	int totalColumns{ grid->GetColumns() };
+	int totalRows{ grid->GetRows() };
 
-	int finalCheckColumn = currentColumn + directionX;
-	int finalCheckRow = currentRow + directionY;
+	int finalCheckColumn{ currentColumn + directionX };
+	int finalCheckRow{ currentRow + directionY };
 
 	while (finalCheckColumn >= 0 && finalCheckColumn < totalColumns && finalCheckRow >= 0 && finalCheckRow < totalRows)
 	{
-		int cellIndex = finalCheckRow * totalColumns + finalCheckColumn;
+		int cellIndex{ finalCheckRow * totalColumns + finalCheckColumn };
 
 		if (visitedCells[cellIndex])
 		{
@@ -245,18 +249,18 @@ bool LevelGenerator::IsFinalPathTrapped(Grid* grid, int currentColumn, int curre
 
 void LevelGenerator::PlaceDecoyMirrors(Grid* grid, std::vector<bool>& visitedCells, int numberOfDecoys)
 {
-	int totalColumns = grid->GetColumns();
-	int totalRows = grid->GetRows();
+	int totalColumns{ grid->GetColumns() };
+	int totalRows{ grid->GetRows() };
 
-	int decoysPlaced = 0;
-	int maximumAttempts = numberOfDecoys * 10;
-	int currentAttempts = 0;
+	int decoysPlaced{ 0 };
+	int maximumAttempts{ numberOfDecoys * 10 };
+	int currentAttempts{ 0 };
 
 	while (decoysPlaced < numberOfDecoys && currentAttempts < maximumAttempts)
 	{
-		int randomColumn = rand() % totalColumns;
-		int randomRow = rand() % totalRows;
-		int targetIndex = randomRow * totalColumns + randomColumn;
+		int randomColumn{ rand() % totalColumns };
+		int randomRow{ rand() % totalRows };
+		int targetIndex{ randomRow * totalColumns + randomColumn };
 
 		if (!visitedCells[targetIndex])
 		{
