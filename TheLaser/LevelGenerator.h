@@ -25,6 +25,7 @@ private:
 	int GetMaximumDistance(Grid* grid, int currentColumn, int currentRow, int directionX, int directionY, const std::vector<bool>& visitedCells);
 	
 	bool TryGetNewDirection(Grid* grid, int currentColumn, int currentRow, int previousDirectionX, int previousDirectionY, const std::vector<bool>& visitedCells, int& newDirectionX, int& newDirectionY);
+	
 	bool IsFinalPathTrapped(Grid* grid, int currentColumn, int currentRow, int directionX, int directionY, const std::vector<bool>& visitedCells);
 	
 	void PlaceDecoyMirrors(Grid* grid, std::vector<bool>& visitedCells, int numberOfDecoys);

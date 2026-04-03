@@ -18,11 +18,11 @@ enum class MirrorOrientation
 class Mirror
 {
 private:
-	Rectf m_Boundaries;
-	MirrorType m_Type;
-	MirrorOrientation m_Orientation;
-	Vector2f m_FirstPoint;
-	Vector2f m_SecondPoint;
+	Rectf m_Boundaries{};
+	MirrorType m_Type{};
+	MirrorOrientation m_Orientation{};
+	Vector2f m_FirstPoint{};
+	Vector2f m_SecondPoint{};
 
 public:
 	Mirror(const Rectf& cellBoundaries, MirrorType type);

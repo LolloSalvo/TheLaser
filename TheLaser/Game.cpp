@@ -59,13 +59,7 @@ void Game::ProcessKeyDownEvent( const SDL_KeyboardEvent & e )
 	{
 	case SDLK_r:
 		
-		m_GameState = GameState::Playing;
-
-		ChooseRandomStartPosition();
-		m_Laser->AddPoint(m_LaserStartPoint);
-
-		LevelGenerator generator{};
-		generator.GeneratePath(m_Grid, m_StartPosition, m_LaserDirection, 15);
+		Restart();
 		break;
 	}
 }
@@ -198,6 +192,7 @@ void Game::CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirecti
 						m_GameState = GameState::Victory;
 
 						std::cout << "VICTORY!" << std::endl;
+						Restart();
 						break;
 					}
 
@@ -215,5 +210,16 @@ void Game::CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirecti
 	{
 		m_Laser->AddPoint(hitInformation.intersectPoint);
 	}
+}
+
+void Game::Restart()
+{
+	m_GameState = GameState::Playing;
+
+	ChooseRandomStartPosition();
+	m_Laser->AddPoint(m_LaserStartPoint);
+
+	LevelGenerator generator{};
+	generator.GeneratePath(m_Grid, m_StartPosition, m_LaserDirection, 15);
 }
 

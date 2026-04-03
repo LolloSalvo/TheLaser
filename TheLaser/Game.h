@@ -69,6 +69,8 @@ private:
 	void ChooseRandomStartPosition();
 	
 	void CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirection);
+
+	void Restart();
 	
 
 };
