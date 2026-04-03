@@ -17,10 +17,10 @@ void LevelGenerator::GeneratePath(Grid* grid, StartingPosition startPosition, Ve
 
 		int currentColumn = 0;
 		int currentRow = 0;
+
 		SetupStartingPosition(grid, startPosition, currentColumn, currentRow);
 
 		int directionX = static_cast<int>(laserDirection.x);
-		
 		int directionY = static_cast<int>(laserDirection.y);
 
 		bool isTrapped = false;
