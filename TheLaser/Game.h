@@ -5,6 +5,7 @@
 #include "Mirror.h"
 #include "Laser.h"
 #include "LevelGenerator.h"
+#include "Digit.h"
 
 #include <vector>
 
@@ -64,6 +65,17 @@ private:
 	
 	LevelGenerator m_LevelGenerator{};
 
+	Digit m_TextureHolder{ 0, Digit::Mode::Bright, Vector2f{ -100.0f, -100.0f } };
+
+	std::vector<Digit*> m_TimerDigits{};
+
+	int m_DisplayedSeconds{ -1 };
+
+	float m_GameTimer{ 60.0f };
+	float m_VictoryTimer{ 0.0f };
+	const float m_MaxVictoryTime{ 3.0f };
+	const float m_TimerIncrement{ 15.0f };
+
 	//Functions
 
 	void ChooseRandomStartPosition();
@@ -71,6 +83,10 @@ private:
 	void CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirection);
 
 	void Restart();
+
+	void UpdateTimerDigits(int seconds);
+
+
 	
 
 };

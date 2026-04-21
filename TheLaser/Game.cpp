@@ -20,6 +20,9 @@ Game::~Game( )
 void Game::Initialize( )
 {
 	m_GameState = GameState::Playing;
+	m_GameTimer = 60.0f;
+	m_VictoryTimer = 0.0f;
+	m_DisplayedSeconds = -1;
 
 	ChooseRandomStartPosition();
 	m_Laser->AddPoint(m_LaserStartPoint);
@@ -35,6 +38,11 @@ void Game::Initialize( )
 
 void Game::Cleanup( )
 {
+	for (Digit* currentDigit : m_TimerDigits)
+	{
+		delete currentDigit;
+	}
+	m_TimerDigits.clear();
 }
 
 void Game::Update( float elapsedSec )
@@ -42,6 +50,14 @@ void Game::Update( float elapsedSec )
 	if (m_GameState == GameState::Playing)
 	{
 		CalculateLaserPath(m_LaserStartPoint, m_LaserDirection);
+	}
+
+	int currentSeconds{ static_cast<int>(std::ceil(m_GameTimer)) };
+
+	if (currentSeconds != m_DisplayedSeconds)
+	{
+		UpdateTimerDigits(currentSeconds);
+		m_DisplayedSeconds = currentSeconds;
 	}
 }
 
@@ -51,6 +67,11 @@ void Game::Draw( ) const
 	m_Grid->Draw();
 
 	m_Laser->Draw();
+
+	for (Digit* currentDigit : m_TimerDigits)
+	{
+		currentDigit->Draw();
+	}
 }
 
 void Game::ProcessKeyDownEvent( const SDL_KeyboardEvent & e )
@@ -192,6 +213,7 @@ void Game::CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirecti
 						m_GameState = GameState::Victory;
 
 						std::cout << "VICTORY!" << std::endl;
+						//Sleep(1000);
 						Restart();
 						break;
 					}
@@ -221,5 +243,29 @@ void Game::Restart()
 
 	LevelGenerator generator{};
 	generator.GeneratePath(m_Grid, m_StartPosition, m_LaserDirection, 15);
+}
+
+void Game::UpdateTimerDigits(int seconds)
+{
+	for (Digit* currentDigit : m_TimerDigits)
+	{
+		delete currentDigit;
+	}
+	m_TimerDigits.clear();
+
+	std::string secondsString{ std::to_string(seconds) };
+	float spacing{ 40.0f };
+	float totalWidth{ secondsString.length() * spacing };
+
+	float startX{ (GetViewPort().width / 2.0f) - (totalWidth / 2.0f) };
+	float startY{ GetViewPort().height - 60.0f };
+
+	for (size_t index{ 0 }; index < secondsString.length(); ++index)
+	{
+		int numberValue{ secondsString[index] - '0' };
+		Vector2f digitPosition{ startX + (index * spacing), startY };
+
+		m_TimerDigits.push_back(new Digit{ numberValue, Digit::Mode::Bright, digitPosition });
+	}
 }
 
