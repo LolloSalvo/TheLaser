@@ -17,7 +17,7 @@ Game::~Game( )
 	delete m_Grid;
 }
 
-void Game::Initialize( )
+void Game::Initialize()
 {
 	m_GameState = GameState::Playing;
 	m_GameTimer = 60.0f;
@@ -25,15 +25,12 @@ void Game::Initialize( )
 	m_DisplayedSeconds = -1;
 
 	ChooseRandomStartPosition();
+
+	m_Laser->ClearPath();
 	m_Laser->AddPoint(m_LaserStartPoint);
 
 	LevelGenerator generator{};
 	generator.GeneratePath(m_Grid, m_StartPosition, m_LaserDirection, 15);
-	
-	/*m_Grid->AddMirror(3, 0);
-	m_Grid->AddMirror(3, 7);
-	m_Grid->AddMirror(7, 7);
-	m_Grid->AddMirror(7, 8);*/
 }
 
 void Game::Cleanup( )
@@ -47,6 +44,8 @@ void Game::Cleanup( )
 
 void Game::Update( float elapsedSec )
 {
+	m_Grid->Update(elapsedSec);
+
 	if (m_GameState == GameState::Playing)
 	{
 		CalculateLaserPath(m_LaserStartPoint, m_LaserDirection);
@@ -58,6 +57,17 @@ void Game::Update( float elapsedSec )
 	{
 		UpdateTimerDigits(currentSeconds);
 		m_DisplayedSeconds = currentSeconds;
+	}
+}
+	else if (m_GameState == GameState::Victory)
+	{
+		m_VictoryTimer += elapsedSec;
+
+		if (m_VictoryTimer >= m_MaxVictoryTime)
+		{
+			m_VictoryTimer = 0.0f;
+			Initialize(); // Qui viene generato il nuovo percorso
+		}
 	}
 }
 
@@ -178,21 +188,21 @@ void Game::CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirecti
 	m_Laser->ClearPath();
 	m_Laser->AddPoint(firstPoint);
 
-	const float step = 10.0f;
+	const float step{ 10.0f };
 
-	Vector2f currentLaserDirection = laserDirection;
-	Vector2f currentFirstPoint = firstPoint;
-	Vector2f secondPoint = firstPoint;
+	Vector2f currentLaserDirection{ laserDirection };
+	Vector2f currentFirstPoint{ firstPoint };
+	Vector2f secondPoint{ firstPoint };
 	utils::HitInfo hitInformation{};
 
-	bool hitReceiver = false;
+	bool hitReceiver{ false };
 
 	while (!utils::Raycast(m_BoundaryPoints, currentFirstPoint, secondPoint, hitInformation))
 	{
-		secondPoint.x = secondPoint.x + (step * currentLaserDirection.x);
-		secondPoint.y = secondPoint.y + (step * currentLaserDirection.y);
+		secondPoint.x += (step * currentLaserDirection.x);
+		secondPoint.y += (step * currentLaserDirection.y);
 
-		Cell* currentCell = m_Grid->GetCellFromPosition(secondPoint, m_Center);
+		Cell* currentCell{ m_Grid->GetCellFromPosition(secondPoint, m_Center) };
 
 		if (currentCell != nullptr && currentCell->HasMirror())
 		{
@@ -210,11 +220,12 @@ void Game::CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirecti
 					if (currentCell->GetMirrorType() == MirrorType::Receiver)
 					{
 						hitReceiver = true;
-						m_GameState = GameState::Victory;
 
-						std::cout << "VICTORY!" << std::endl;
-						//Sleep(1000);
-						Restart();
+						if (!m_Grid->IsAnyMirrorRotating())
+						{
+							m_GameState = GameState::Victory;
+						}
+
 						break;
 					}
 

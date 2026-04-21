@@ -31,12 +31,16 @@ public:
 	void RotateMirrorAt(const Vector2f& position, const Vector2f& centerPos);
 	void AddReceiver(int col, int row);
 
+	void Update(float elapsedSeconds);
+
 	int GetCellIndexFromPosition(const Vector2f& position, const Vector2f& centerPos) const;
 
 	Cell* GetCellFromPosition(const Vector2f& position, const Vector2f& centerPos) const;
 
 	Cell* GetCellFromIndex(int index);
 	Cell* GetCellFromIndex(int col, int row);
+
+	bool IsAnyMirrorRotating() const;
 
 private:
 

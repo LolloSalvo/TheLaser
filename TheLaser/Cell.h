@@ -17,10 +17,13 @@ public:
 	void RotateMirror();
 	MirrorType GetMirrorType() const;
 
+	void Update(float elapsedSec);
+
 	bool HasMirror() const;
 
 	bool GetMirrorPoint(Vector2f& p1Out, Vector2f& p2Out);
 
+	bool IsRotating() const;
 
 private:
 
