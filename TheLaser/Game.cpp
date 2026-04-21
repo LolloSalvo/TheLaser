@@ -58,7 +58,6 @@ void Game::Update( float elapsedSec )
 		UpdateTimerDigits(currentSeconds);
 		m_DisplayedSeconds = currentSeconds;
 	}
-}
 	else if (m_GameState == GameState::Victory)
 	{
 		m_VictoryTimer += elapsedSec;
