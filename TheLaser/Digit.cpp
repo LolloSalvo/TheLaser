@@ -3,6 +3,8 @@
 
 #include "utils.h"
 
+#include <iostream>
+
 Texture* Digit::m_SpriteSheet{};
 int Digit::m_NumInstances{ 0 };
 
@@ -18,6 +20,7 @@ Digit::Digit(int number, Mode mode, Vector2f position)
 	if (m_SpriteSheet == nullptr)
 	{
 		m_SpriteSheet = new Texture{ "digits.png" };
+		std::cout << "Larghezza SpriteSheet: " << m_SpriteSheet->GetWidth() << std::endl;
 	}
 
 	m_NumInstances++;
@@ -36,6 +39,7 @@ Digit::Digit(int number, Mode mode, Vector2f position, Color4f color)
 	if (m_SpriteSheet == nullptr)
 	{
 		m_SpriteSheet = new Texture{ "digits.png" };
+		std::cout << "Larghezza SpriteSheet: " << m_SpriteSheet->GetWidth() << std::endl;
 	}
 
 	m_NumInstances++;
@@ -73,28 +77,30 @@ Rectf Digit::GetFrameRect() const
 {
 	if (m_SpriteSheet != nullptr)
 	{
-		return Rectf(
-			(m_SpriteSheet->GetWidth() / 11.f) * m_Number,
-			0.f,
-			m_SpriteSheet->GetWidth() / 11.f,
-			m_SpriteSheet->GetHeight() / 2.f
-		);
-	}
-	else
-	{
-		return Rectf();
-	}
+		float frameWidth{ m_SpriteSheet->GetWidth() / 11.f };
+		float frameHeight{ m_SpriteSheet->GetHeight() / 2.f };
 
+		float yOffset{ frameHeight };
+
+		return Rectf{
+			frameWidth * m_Number,
+			yOffset,
+			frameWidth,
+			frameHeight
+		};
+	}
+	return Rectf{};
 }
 
 void Digit::Draw() const
 {
 	Rectf srcRect{ GetFrameRect() };
 
-	utils::SetColor(m_Color);
-	utils::FillRect(m_Position.x, m_Position.y, srcRect.width, srcRect.height);
+	float desiredWidth{ 40.0f };
+	float desiredHeight{ 60.0f };
+	Rectf destRect{ m_Position.x, m_Position.y, desiredWidth, desiredHeight };
 
-	m_SpriteSheet->Draw(m_Position, srcRect);
+	m_SpriteSheet->Draw(destRect, srcRect);
 }
 
 void Digit::DrawMeridium(Vector2f position, bool isAM) const

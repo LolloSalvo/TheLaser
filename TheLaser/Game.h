@@ -40,7 +40,8 @@ private:
 	enum class GameState
 	{
 		Playing,
-		Victory
+		Victory,
+		GameOver
 	};
 
 	GameState m_GameState{};
@@ -73,8 +74,14 @@ private:
 
 	float m_GameTimer{ 60.0f };
 	float m_VictoryTimer{ 0.0f };
-	const float m_MaxVictoryTime{ 3.0f };
-	const float m_TimerIncrement{ 15.0f };
+	const float m_MaxVictoryTime{ 0.5f };
+	const float m_TimerIncrement{ 5.0f };
+
+	int m_Score{ 0 };
+	float m_LevelTimeElapsed{ 0.0f };
+	std::vector<Digit*> m_ScoreDigits{};
+	int m_DisplayedScore{ -1 };
+
 
 	//Functions
 
@@ -86,7 +93,8 @@ private:
 
 	void UpdateTimerDigits(int seconds);
 
-
+	void DrawLaserEmitter() const;
 	
+	void UpdateScoreDigits(int score);
 
 };

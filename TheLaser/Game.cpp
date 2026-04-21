@@ -2,6 +2,8 @@
 #include "Game.h"
 #include "utils.h"
 
+#include <algorithm>
+
 #include <iostream>
 #include <vector>
 
@@ -24,6 +26,10 @@ void Game::Initialize()
 	m_VictoryTimer = 0.0f;
 	m_DisplayedSeconds = -1;
 
+	m_Score = 0;
+	m_LevelTimeElapsed = 0.0f;
+	m_DisplayedScore = -1;
+
 	ChooseRandomStartPosition();
 
 	m_Laser->ClearPath();
@@ -40,15 +46,49 @@ void Game::Cleanup( )
 		delete currentDigit;
 	}
 	m_TimerDigits.clear();
+
+	for (Digit* currentDigit : m_ScoreDigits)
+	{
+		delete currentDigit;
+	}
+	m_ScoreDigits.clear();
 }
 
-void Game::Update( float elapsedSec )
+void Game::Update(float elapsedSec)
 {
 	m_Grid->Update(elapsedSec);
 
 	if (m_GameState == GameState::Playing)
 	{
+		m_GameTimer -= elapsedSec;
+		m_LevelTimeElapsed += elapsedSec;
+
+		if (m_GameTimer <= 0.0f)
+		{
+			m_GameTimer = 0.0f;
+			m_GameState = GameState::GameOver;
+		}
+
 		CalculateLaserPath(m_LaserStartPoint, m_LaserDirection);
+	}
+	else if (m_GameState == GameState::Victory)
+	{
+		m_VictoryTimer += elapsedSec;
+
+		if (m_VictoryTimer >= m_MaxVictoryTime)
+		{
+			m_VictoryTimer = 0.0f;
+			m_LevelTimeElapsed = 0.0f;
+
+			ChooseRandomStartPosition();
+			m_Laser->ClearPath();
+			m_Laser->AddPoint(m_LaserStartPoint);
+
+			LevelGenerator generator{};
+			generator.GeneratePath(m_Grid, m_StartPosition, m_LaserDirection, 15);
+
+			m_GameState = GameState::Playing;
+		}
 	}
 
 	int currentSeconds{ static_cast<int>(std::ceil(m_GameTimer)) };
@@ -58,26 +98,28 @@ void Game::Update( float elapsedSec )
 		UpdateTimerDigits(currentSeconds);
 		m_DisplayedSeconds = currentSeconds;
 	}
-	else if (m_GameState == GameState::Victory)
-	{
-		m_VictoryTimer += elapsedSec;
 
-		if (m_VictoryTimer >= m_MaxVictoryTime)
-		{
-			m_VictoryTimer = 0.0f;
-			Initialize(); // Qui viene generato il nuovo percorso
-		}
+	if (m_Score != m_DisplayedScore)
+	{
+		UpdateScoreDigits(m_Score);
+		m_DisplayedScore = m_Score;
 	}
 }
 
-void Game::Draw( ) const
+void Game::Draw() const
 {
-	ClearBackground( );
+	ClearBackground();
 	m_Grid->Draw();
 
 	m_Laser->Draw();
+	DrawLaserEmitter();
 
 	for (Digit* currentDigit : m_TimerDigits)
+	{
+		currentDigit->Draw();
+	}
+
+	for (Digit* currentDigit : m_ScoreDigits)
 	{
 		currentDigit->Draw();
 	}
@@ -223,6 +265,11 @@ void Game::CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirecti
 						if (!m_Grid->IsAnyMirrorRotating())
 						{
 							m_GameState = GameState::Victory;
+							m_GameTimer += 15.0f;
+
+							// Calcolo punti: 100 base, -5 per ogni secondo trascorso. Minimo 10 punti.
+							int pointsEarned{ std::max(10, 100 - static_cast<int>(m_LevelTimeElapsed * 5.0f)) };
+							m_Score += pointsEarned;
 						}
 
 						break;
@@ -248,7 +295,18 @@ void Game::Restart()
 {
 	m_GameState = GameState::Playing;
 
+	m_GameTimer = 60.0f;
+	m_VictoryTimer = 0.0f;
+	m_DisplayedSeconds = -1;
+
+
+	m_Score = 0;
+	m_LevelTimeElapsed = 0.0f;
+	m_DisplayedScore = -1;
+
 	ChooseRandomStartPosition();
+
+	m_Laser->ClearPath();
 	m_Laser->AddPoint(m_LaserStartPoint);
 
 	LevelGenerator generator{};
@@ -264,18 +322,71 @@ void Game::UpdateTimerDigits(int seconds)
 	m_TimerDigits.clear();
 
 	std::string secondsString{ std::to_string(seconds) };
-	float spacing{ 40.0f };
-	float totalWidth{ secondsString.length() * spacing };
 
+	float digitWidth{ 40.0f };
+	float digitHeight{ 60.0f };
+	float spacing{ digitWidth + 5.0f };
+
+	float totalWidth{ secondsString.length() * spacing };
 	float startX{ (GetViewPort().width / 2.0f) - (totalWidth / 2.0f) };
-	float startY{ GetViewPort().height - 60.0f };
+	float startY{ GetViewPort().height - digitHeight - 20.0f };
 
 	for (size_t index{ 0 }; index < secondsString.length(); ++index)
 	{
 		int numberValue{ secondsString[index] - '0' };
 		Vector2f digitPosition{ startX + (index * spacing), startY };
 
-		m_TimerDigits.push_back(new Digit{ numberValue, Digit::Mode::Bright, digitPosition });
+		m_TimerDigits.push_back(new Digit{ numberValue, Digit::Mode::Dark, digitPosition });
 	}
 }
 
+void Game::DrawLaserEmitter() const
+{
+	float height{ 32.0f };
+	float baseWidth{ 24.0f };
+	float baseHalfWidth{ baseWidth / 2.0f };
+
+	Vector2f direction{ m_LaserDirection };
+	Vector2f perpendicular{ -direction.y, direction.x };
+
+	Vector2f apexPoint{ m_LaserStartPoint.x, m_LaserStartPoint.y };
+
+	Vector2f baseCenter{ apexPoint.x - (direction.x * height), apexPoint.y - (direction.y * height) };
+
+	Vector2f vertex2{ baseCenter.x + (perpendicular.x * baseHalfWidth), baseCenter.y + (perpendicular.y * baseHalfWidth) };
+	Vector2f vertex3{ baseCenter.x - (perpendicular.x * baseHalfWidth), baseCenter.y - (perpendicular.y * baseHalfWidth) };
+
+	std::vector<Vector2f> triangleVertices{ apexPoint, vertex2, vertex3 };
+
+	utils::SetColor(Color4f{ 0.8f, 0.1f, 0.1f, 1.0f });
+	utils::FillPolygon(triangleVertices);
+
+	utils::SetColor(Color4f{ 1.0f, 1.0f, 1.0f, 1.0f });
+	utils::DrawPolygon(triangleVertices, true);
+}
+
+void Game::UpdateScoreDigits(int score)
+{
+	for (Digit* currentDigit : m_ScoreDigits)
+	{
+		delete currentDigit;
+	}
+	m_ScoreDigits.clear();
+
+	std::string scoreString{ std::to_string(score) };
+
+	float digitWidth{ 40.0f };
+	float digitHeight{ 60.0f };
+	float spacing{ digitWidth + 5.0f };
+
+	float startX{ 20.0f };
+	float startY{ GetViewPort().height - digitHeight - 20.0f };
+
+	for (size_t index{ 0 }; index < scoreString.length(); ++index)
+	{
+		int numberValue{ scoreString[index] - '0' };
+		Vector2f digitPosition{ startX + (index * spacing), startY };
+
+		m_ScoreDigits.push_back(new Digit{ numberValue, Digit::Mode::Bright, digitPosition });
+	}
+}
