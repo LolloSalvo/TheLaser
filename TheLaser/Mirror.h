@@ -24,6 +24,12 @@ private:
 	Vector2f m_FirstPoint{};
 	Vector2f m_SecondPoint{};
 
+	float m_CurrentAngle;
+	float m_TargetAngle;
+	float m_RotationSpeed;
+
+	void CalculatePoints();
+
 public:
 	Mirror(const Rectf& cellBoundaries, MirrorType type);
 
@@ -33,4 +39,7 @@ public:
 
 	void Draw() const;
 	void RotateMirror();
+	void Update(float elapsedSeconds);
+
+	bool IsRotating() const;
 };

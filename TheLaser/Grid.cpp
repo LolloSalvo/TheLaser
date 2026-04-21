@@ -121,6 +121,18 @@ Cell* Grid::GetCellFromIndex(int col, int row)
 	return m_pCells[GetIndex(col, row)];
 }
 
+bool Grid::IsAnyMirrorRotating() const
+{
+	for (Cell* cell : m_pCells)
+	{
+		if (cell->HasMirror() && cell->IsRotating()) // Devi aggiungere IsRotating anche in Cell che chiama quello di Mirror
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 
 void Grid::AddMirror(int col, int row)
 {
@@ -166,6 +178,14 @@ void Grid::RotateMirrorAt(const Vector2f& position, const Vector2f& centerPos)
 	if (currentCell != nullptr && currentCell->HasMirror())
 	{
 		currentCell->RotateMirror();
+	}
+}
+
+void Grid::Update(float elapsedSeconds)
+{
+	for (Cell* currentCell : m_pCells)
+	{
+		currentCell->Update(elapsedSeconds);
 	}
 }
 

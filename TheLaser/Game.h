@@ -64,6 +64,9 @@ private:
 	
 	LevelGenerator m_LevelGenerator{};
 
+	float m_VictoryTimer{ 0.0f };
+	const float m_MaxVictoryTime{ 0.5f };
+
 	//Functions
 
 	void ChooseRandomStartPosition();

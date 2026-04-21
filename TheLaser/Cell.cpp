@@ -75,4 +75,15 @@ MirrorType Cell::GetMirrorType() const
 	return m_pMirror->GetType();
 }
 
+void Cell::Update(float elapsedSeconds)
+{
+	if (m_pMirror != nullptr)
+	{
+		m_pMirror->Update(elapsedSeconds);
+	}
+}
+bool Cell::IsRotating() const 
+{
+	return m_pMirror->IsRotating();
+}
 
