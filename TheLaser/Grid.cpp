@@ -125,7 +125,7 @@ bool Grid::IsAnyMirrorRotating() const
 {
 	for (Cell* cell : m_pCells)
 	{
-		if (cell->HasMirror() && cell->IsRotating()) // Devi aggiungere IsRotating anche in Cell che chiama quello di Mirror
+		if (cell->HasMirror() && cell->IsRotating())
 		{
 			return true;
 		}

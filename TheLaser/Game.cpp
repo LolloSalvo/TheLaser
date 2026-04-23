@@ -1,57 +1,52 @@
 #include "pch.h"
 #include "Game.h"
 #include "utils.h"
-
-#include <algorithm>
+#include "LevelGenerator.h" 
+#include "Texture.h"
 
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
-Game::Game( const Window& window ) 
-	:BaseGame{ window }
+Game::Game(const Window& window)
+	: BaseGame{ window }
 {
 	Initialize();
 }
 
-Game::~Game( )
+Game::~Game()
 {
-	Cleanup( );
+	Cleanup();
 	delete m_Grid;
+	delete m_Laser;
 }
 
 void Game::Initialize()
 {
-	m_GameState = GameState::Playing;
-	m_GameTimer = 60.0f;
-	m_VictoryTimer = 0.0f;
-	m_DisplayedSeconds = -1;
+	Color4f white{ 1.f, 1.f, 1.f, 1.f };
+	if (m_pScoreLabel == nullptr) m_pScoreLabel = new Texture("SCORE:", "TypoDigit.otf", 20, white);
+	if (m_pLevelLabel == nullptr) m_pLevelLabel = new Texture("LEVEL:", "TypoDigit.otf", 20, white);
 
-	m_Score = 0;
-	m_LevelTimeElapsed = 0.0f;
-	m_DisplayedScore = -1;
-
-	ChooseRandomStartPosition();
-
-	m_Laser->ClearPath();
-	m_Laser->AddPoint(m_LaserStartPoint);
-
-	LevelGenerator generator{};
-	generator.GeneratePath(m_Grid, m_StartPosition, m_LaserDirection, 15);
+	ResetGameStats();
+	SetupNewLevel();
 }
 
-void Game::Cleanup( )
+void Game::Cleanup()
 {
-	for (Digit* currentDigit : m_TimerDigits)
-	{
-		delete currentDigit;
-	}
+	for (Digit* currentDigit : m_TimerDigits) delete currentDigit;
 	m_TimerDigits.clear();
 
-	for (Digit* currentDigit : m_ScoreDigits)
-	{
-		delete currentDigit;
-	}
+	for (Digit* currentDigit : m_ScoreDigits) delete currentDigit;
 	m_ScoreDigits.clear();
+
+	for (Digit* currentDigit : m_LevelCounterDigits) delete currentDigit;
+	m_LevelCounterDigits.clear();
+
+	delete m_pScoreLabel;
+	delete m_pLevelLabel;
+	delete m_pGameOverTitle;
+	delete m_pGameOverScoreText;
+	delete m_pGameOverLevelText;
 }
 
 void Game::Update(float elapsedSec)
@@ -67,6 +62,18 @@ void Game::Update(float elapsedSec)
 		{
 			m_GameTimer = 0.0f;
 			m_GameState = GameState::GameOver;
+
+			Color4f red{ 1.0f, 0.2f, 0.2f, 1.0f };
+			Color4f white{ 1.0f, 1.0f, 1.0f, 1.0f };
+
+			delete m_pGameOverTitle;
+			m_pGameOverTitle = new Texture("GAME OVER", "TypoDigit.otf", 64, red);
+
+			delete m_pGameOverScoreText;
+			m_pGameOverScoreText = new Texture("FINAL SCORE: " + std::to_string(m_Score), "TypoDigit.otf", 32, white);
+
+			delete m_pGameOverLevelText;
+			m_pGameOverLevelText = new Texture("LEVELS CLEARED: " + std::to_string(m_LevelsSolved), "TypoDigit.otf", 32, white);
 		}
 
 		CalculateLaserPath(m_LaserStartPoint, m_LaserDirection);
@@ -77,91 +84,66 @@ void Game::Update(float elapsedSec)
 
 		if (m_VictoryTimer >= m_MaxVictoryTime)
 		{
-			m_VictoryTimer = 0.0f;
-			m_LevelTimeElapsed = 0.0f;
-
-			ChooseRandomStartPosition();
-			m_Laser->ClearPath();
-			m_Laser->AddPoint(m_LaserStartPoint);
-
-			LevelGenerator generator{};
-			generator.GeneratePath(m_Grid, m_StartPosition, m_LaserDirection, 15);
-
-			m_GameState = GameState::Playing;
+			m_LevelsSolved++;
+			SetupNewLevel();
 		}
 	}
 
-	int currentSeconds{ static_cast<int>(std::ceil(m_GameTimer)) };
-
-	if (currentSeconds != m_DisplayedSeconds)
-	{
-		UpdateTimerDigits(currentSeconds);
-		m_DisplayedSeconds = currentSeconds;
-	}
-
-	if (m_Score != m_DisplayedScore)
-	{
-		UpdateScoreDigits(m_Score);
-		m_DisplayedScore = m_Score;
-	}
+	UpdateHUD();
 }
 
 void Game::Draw() const
 {
 	ClearBackground();
-	m_Grid->Draw();
 
+	if (m_GameState == GameState::GameOver)
+	{
+		DrawGameOver();
+		return;
+	}
+
+	m_Grid->Draw();
 	m_Laser->Draw();
 	DrawLaserEmitter();
 
-	for (Digit* currentDigit : m_TimerDigits)
-	{
-		currentDigit->Draw();
-	}
+	m_pScoreLabel->Draw(Vector2f{ 20.0f, GetViewPort().height - 30.0f }, Rectf{});
 
-	for (Digit* currentDigit : m_ScoreDigits)
-	{
-		currentDigit->Draw();
-	}
+	float startXLabel{ GetViewPort().width - m_pLevelLabel->GetWidth() - 20.0f };
+	m_pLevelLabel->Draw(Vector2f{ startXLabel, GetViewPort().height - 30.0f }, Rectf{});
+
+	for (Digit* currentDigit : m_TimerDigits) currentDigit->Draw();
+	for (Digit* currentDigit : m_ScoreDigits) currentDigit->Draw();
+	for (Digit* currentDigit : m_LevelCounterDigits) currentDigit->Draw();
 }
 
-void Game::ProcessKeyDownEvent( const SDL_KeyboardEvent & e )
+void Game::DrawGameOver() const
 {
-	switch (e.keysym.sym)
+	float middleX{ GetViewPort().width / 2.0f };
+	float middleY{ GetViewPort().height / 2.0f };
+
+	float titleX{ middleX - (m_pGameOverTitle->GetWidth() / 2.0f) };
+	m_pGameOverTitle->Draw(Vector2f{ titleX, middleY + 60.0f }, Rectf{});
+
+	float scoreX{ middleX - (m_pGameOverScoreText->GetWidth() / 2.0f) };
+	m_pGameOverScoreText->Draw(Vector2f{ scoreX, middleY - 10.0f }, Rectf{});
+
+	float levelX{ middleX - (m_pGameOverLevelText->GetWidth() / 2.0f) };
+	m_pGameOverLevelText->Draw(Vector2f{ levelX, middleY - 60.0f }, Rectf{});
+}
+
+void Game::ProcessKeyDownEvent(const SDL_KeyboardEvent& e)
+{
+	if (e.keysym.sym == SDLK_r)
 	{
-	case SDLK_r:
-		
 		Restart();
-		break;
 	}
 }
 
-void Game::ProcessKeyUpEvent( const SDL_KeyboardEvent& e )
-{
-	//std::cout << "KEYUP event: " << e.keysym.sym << std::endl;
-	//switch ( e.keysym.sym )
-	//{
-	//case SDLK_LEFT:
-	//	//std::cout << "Left arrow key released\n";
-	//	break;
-	//case SDLK_RIGHT:
-	//	//std::cout << "`Right arrow key released\n";
-	//	break;
-	//case SDLK_1:
-	//case SDLK_KP_1:
-	//	//std::cout << "Key 1 released\n";
-	//	break;
-	//}
-}
+void Game::ProcessKeyUpEvent(const SDL_KeyboardEvent& e) {}
+void Game::ProcessMouseMotionEvent(const SDL_MouseMotionEvent& e) {}
 
-void Game::ProcessMouseMotionEvent( const SDL_MouseMotionEvent& e )
+void Game::ProcessMouseDownEvent(const SDL_MouseButtonEvent& e)
 {
-	//std::cout << "MOUSEMOTION event: " << e.x << ", " << e.y << std::endl;
-}
-
-void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
-{
-
 	if (m_GameState == GameState::Playing)
 	{
 		if (e.button == SDL_BUTTON_LEFT)
@@ -169,36 +151,20 @@ void Game::ProcessMouseDownEvent( const SDL_MouseButtonEvent& e )
 			m_Grid->RotateMirrorAt(Vector2f{ static_cast<float>(e.x), static_cast<float>(e.y) }, m_Center);
 		}
 	}
-	
 }
 
-void Game::ProcessMouseUpEvent( const SDL_MouseButtonEvent& e )
+void Game::ProcessMouseUpEvent(const SDL_MouseButtonEvent& e) {}
+
+void Game::ClearBackground() const
 {
-	//std::cout << "MOUSEBUTTONUP event: ";
-	//switch ( e.button )
-	//{
-	//case SDL_BUTTON_LEFT:
-	//	std::cout << " left button " << std::endl;
-	//	break;
-	//case SDL_BUTTON_RIGHT:
-	//	std::cout << " right button " << std::endl;
-	//	break;
-	//case SDL_BUTTON_MIDDLE:
-	//	std::cout << " middle button " << std::endl;
-	//	break;
-	//}
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void Game::ClearBackground( ) const
-{
-	glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
-	glClear( GL_COLOR_BUFFER_BIT );
-}
 
 void Game::ChooseRandomStartPosition()
 {
 	int choose = rand() % 4;
-
 	m_StartPosition = static_cast<StartingPosition>(choose);
 
 	switch (m_StartPosition)
@@ -208,18 +174,16 @@ void Game::ChooseRandomStartPosition()
 		m_LaserDirection = Vector2f{ 1.f, 0.f };
 		break;
 	case StartingPosition::BottomRight:
-		m_LaserStartPoint = Vector2f{ m_Grid->GetCellCenter(m_Grid->GetColumns() - 1 , 0).x + m_Grid->GetCellSize(), m_Grid->GetCellCenter(m_Grid->GetColumns() - 1, 0).y };
+		m_LaserStartPoint = Vector2f{ m_Grid->GetCellCenter(m_Grid->GetColumns() - 1, 0).x + m_Grid->GetCellSize(), m_Grid->GetCellCenter(m_Grid->GetColumns() - 1, 0).y };
 		m_LaserDirection = Vector2f{ -1.f, 0.f };
 		break;
 	case StartingPosition::TopLeft:
 		m_LaserStartPoint = Vector2f{ m_Grid->GetCellCenter(0, m_Grid->GetRows() - 1).x - m_Grid->GetCellSize(), m_Grid->GetCellCenter(0, m_Grid->GetRows() - 1).y };
-		m_LaserDirection = Vector2f{ 1.f, 0.f };	
+		m_LaserDirection = Vector2f{ 1.f, 0.f };
 		break;
 	case StartingPosition::TopRight:
 		m_LaserStartPoint = Vector2f{ m_Grid->GetCellCenter(m_Grid->GetColumns() - 1, m_Grid->GetRows() - 1).x + m_Grid->GetCellSize(), m_Grid->GetCellCenter(m_Grid->GetColumns() - 1, m_Grid->GetRows() - 1).y };
 		m_LaserDirection = Vector2f{ -1.f, 0.f };
-		break;
-	default:
 		break;
 	}
 }
@@ -230,12 +194,10 @@ void Game::CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirecti
 	m_Laser->AddPoint(firstPoint);
 
 	const float step{ 10.0f };
-
 	Vector2f currentLaserDirection{ laserDirection };
 	Vector2f currentFirstPoint{ firstPoint };
 	Vector2f secondPoint{ firstPoint };
 	utils::HitInfo hitInformation{};
-
 	bool hitReceiver{ false };
 
 	while (!utils::Raycast(m_BoundaryPoints, currentFirstPoint, secondPoint, hitInformation))
@@ -265,18 +227,15 @@ void Game::CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirecti
 						if (!m_Grid->IsAnyMirrorRotating())
 						{
 							m_GameState = GameState::Victory;
-							m_GameTimer += 15.0f;
+							m_GameTimer += m_TimerIncrement;
 
-							// Calcolo punti: 100 base, -5 per ogni secondo trascorso. Minimo 10 punti.
 							int pointsEarned{ std::max(10, 100 - static_cast<int>(m_LevelTimeElapsed * 5.0f)) };
 							m_Score += pointsEarned;
 						}
-
 						break;
 					}
 
 					currentLaserDirection = currentLaserDirection.Reflect(hitInformation.normal);
-
 					currentFirstPoint.x = hitInformation.intersectPoint.x + (currentLaserDirection.x * 3.0f);
 					currentFirstPoint.y = hitInformation.intersectPoint.y + (currentLaserDirection.y * 3.0f);
 					secondPoint = currentFirstPoint;
@@ -285,59 +244,7 @@ void Game::CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirecti
 		}
 	}
 
-	if (!hitReceiver)
-	{
-		m_Laser->AddPoint(hitInformation.intersectPoint);
-	}
-}
-
-void Game::Restart()
-{
-	m_GameState = GameState::Playing;
-
-	m_GameTimer = 60.0f;
-	m_VictoryTimer = 0.0f;
-	m_DisplayedSeconds = -1;
-
-
-	m_Score = 0;
-	m_LevelTimeElapsed = 0.0f;
-	m_DisplayedScore = -1;
-
-	ChooseRandomStartPosition();
-
-	m_Laser->ClearPath();
-	m_Laser->AddPoint(m_LaserStartPoint);
-
-	LevelGenerator generator{};
-	generator.GeneratePath(m_Grid, m_StartPosition, m_LaserDirection, 15);
-}
-
-void Game::UpdateTimerDigits(int seconds)
-{
-	for (Digit* currentDigit : m_TimerDigits)
-	{
-		delete currentDigit;
-	}
-	m_TimerDigits.clear();
-
-	std::string secondsString{ std::to_string(seconds) };
-
-	float digitWidth{ 40.0f };
-	float digitHeight{ 60.0f };
-	float spacing{ digitWidth + 5.0f };
-
-	float totalWidth{ secondsString.length() * spacing };
-	float startX{ (GetViewPort().width / 2.0f) - (totalWidth / 2.0f) };
-	float startY{ GetViewPort().height - digitHeight - 20.0f };
-
-	for (size_t index{ 0 }; index < secondsString.length(); ++index)
-	{
-		int numberValue{ secondsString[index] - '0' };
-		Vector2f digitPosition{ startX + (index * spacing), startY };
-
-		m_TimerDigits.push_back(new Digit{ numberValue, Digit::Mode::Dark, digitPosition });
-	}
+	if (!hitReceiver) m_Laser->AddPoint(hitInformation.intersectPoint);
 }
 
 void Game::DrawLaserEmitter() const
@@ -348,9 +255,7 @@ void Game::DrawLaserEmitter() const
 
 	Vector2f direction{ m_LaserDirection };
 	Vector2f perpendicular{ -direction.y, direction.x };
-
 	Vector2f apexPoint{ m_LaserStartPoint.x, m_LaserStartPoint.y };
-
 	Vector2f baseCenter{ apexPoint.x - (direction.x * height), apexPoint.y - (direction.y * height) };
 
 	Vector2f vertex2{ baseCenter.x + (perpendicular.x * baseHalfWidth), baseCenter.y + (perpendicular.y * baseHalfWidth) };
@@ -365,22 +270,104 @@ void Game::DrawLaserEmitter() const
 	utils::DrawPolygon(triangleVertices, true);
 }
 
+
+void Game::Restart()
+{
+	ResetGameStats();
+	SetupNewLevel();
+}
+
+void Game::ResetGameStats()
+{
+	m_GameTimer = 60.0f;
+
+	m_Score = 0;
+	
+	m_LevelsSolved = 0;
+
+	m_DisplayedSeconds = -1;
+	
+	m_DisplayedScore = -1;
+	
+	m_DisplayedLevels = -1;
+}
+
+void Game::SetupNewLevel()
+{
+	m_GameState = GameState::Playing;
+
+	m_VictoryTimer = 0.0f;
+	m_LevelTimeElapsed = 0.0f;
+
+	ChooseRandomStartPosition();
+
+	m_Laser->ClearPath();
+	m_Laser->AddPoint(m_LaserStartPoint);
+
+	int mirrorCount{ 5 + m_LevelsSolved };
+	if (mirrorCount > 15) mirrorCount = 15;
+
+	m_LevelGenerator.GeneratePath(m_Grid, m_StartPosition, m_LaserDirection, mirrorCount);
+}
+
+void Game::UpdateHUD()
+{
+	int currentSeconds{ static_cast<int>(std::ceil(m_GameTimer)) };
+	if (currentSeconds != m_DisplayedSeconds)
+	{
+		UpdateTimerDigits(currentSeconds);
+		m_DisplayedSeconds = currentSeconds;
+	}
+
+	if (m_Score != m_DisplayedScore)
+	{
+		UpdateScoreDigits(m_Score);
+		m_DisplayedScore = m_Score;
+	}
+
+	if (m_LevelsSolved != m_DisplayedLevels)
+	{
+		UpdateLevelCounterDigits(m_LevelsSolved + 1);
+		m_DisplayedLevels = m_LevelsSolved;
+	}
+}
+
+
+void Game::UpdateTimerDigits(int seconds)
+{
+	for (Digit* currentDigit : m_TimerDigits) delete currentDigit;
+	m_TimerDigits.clear();
+
+	std::string secondsString{ std::to_string(seconds) };
+	float digitWidth{ 40.0f };
+	float digitHeight{ 60.0f };
+	float spacing{ digitWidth + 5.0f };
+	float totalWidth{ secondsString.length() * spacing };
+
+	float startX{ (GetViewPort().width / 2.0f) - (totalWidth / 2.0f) };
+	float startY{ GetViewPort().height - digitHeight - 20.0f };
+
+	for (size_t index{ 0 }; index < secondsString.length(); ++index)
+	{
+		int numberValue{ secondsString[index] - '0' };
+		Vector2f digitPosition{ startX + (index * spacing), startY };
+
+		m_TimerDigits.push_back(new Digit{ numberValue, Digit::Mode::Bright, digitPosition });
+	}
+}
+
 void Game::UpdateScoreDigits(int score)
 {
-	for (Digit* currentDigit : m_ScoreDigits)
-	{
-		delete currentDigit;
-	}
+	for (Digit* currentDigit : m_ScoreDigits) delete currentDigit;
 	m_ScoreDigits.clear();
 
 	std::string scoreString{ std::to_string(score) };
-
 	float digitWidth{ 40.0f };
 	float digitHeight{ 60.0f };
 	float spacing{ digitWidth + 5.0f };
 
 	float startX{ 20.0f };
-	float startY{ GetViewPort().height - digitHeight - 20.0f };
+	float startY{ GetViewPort().height - digitHeight - 40.0f };
 
 	for (size_t index{ 0 }; index < scoreString.length(); ++index)
 	{
@@ -388,5 +375,28 @@ void Game::UpdateScoreDigits(int score)
 		Vector2f digitPosition{ startX + (index * spacing), startY };
 
 		m_ScoreDigits.push_back(new Digit{ numberValue, Digit::Mode::Bright, digitPosition });
+	}
+}
+
+void Game::UpdateLevelCounterDigits(int levels)
+{
+	for (Digit* currentDigit : m_LevelCounterDigits) delete currentDigit;
+	m_LevelCounterDigits.clear();
+
+	std::string levelString{ std::to_string(levels) };
+	float digitWidth{ 40.0f };
+	float digitHeight{ 60.0f };
+	float spacing{ digitWidth + 5.0f };
+
+	float totalWidth{ levelString.length() * spacing };
+	float startX{ GetViewPort().width - totalWidth - 20.0f };
+	float startY{ GetViewPort().height - digitHeight - 40.0f };
+
+	for (size_t index{ 0 }; index < levelString.length(); ++index)
+	{
+		int numberValue{ levelString[index] - '0' };
+		Vector2f digitPosition{ startX + (index * spacing), startY };
+
+		m_LevelCounterDigits.push_back(new Digit{ numberValue, Digit::Mode::Bright, digitPosition });
 	}
 }

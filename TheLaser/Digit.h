@@ -17,16 +17,11 @@ public:
 	void Increase();
 	void Decrease();
 
-	void Reset();
 	void SetValue(const int number);
 
 	void Draw() const;
-	void DrawMeridium(Vector2f position, bool isAM) const;
 
 	~Digit();
-
-
-
 
 private:
 
