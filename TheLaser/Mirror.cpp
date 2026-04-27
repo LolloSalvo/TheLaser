@@ -8,20 +8,10 @@ Mirror::Mirror(const Rectf& cellBoundaries, MirrorType type)
 	, m_Type{ type }
 	, m_RotationSpeed{ 200.0f }
 {
+	// Random start: either 45deg (/) or 135deg (\)
 	int randomOrientation{ rand() % 2 };
-
-	if (randomOrientation == 0)
-	{
-		m_Orientation = MirrorOrientation::BackSlash;
-		m_CurrentAngle = 135.0f;
-		m_TargetAngle = 135.0f;
-	}
-	else
-	{
-		m_Orientation = MirrorOrientation::ForwardSlash;
-		m_CurrentAngle = 45.0f;
-		m_TargetAngle = 45.0f;
-	}
+	m_CurrentAngle = (randomOrientation == 0) ? 45.0f : 135.0f;
+	m_TargetAngle = m_CurrentAngle;
 
 	CalculatePoints();
 }
@@ -65,12 +55,60 @@ void Mirror::Draw() const
 {
 	if (m_Type == MirrorType::Reflector)
 	{
+		float piConstant{ 3.1415926535f };
+		float angleInRadians{ m_CurrentAngle * piConstant / 180.0f };
+
+		// Mirror direction and back normal
+		float mirrorDX{ cosf(angleInRadians) };
+		float mirrorDY{ sinf(angleInRadians) };
+		float backNX{ sinf(angleInRadians) };
+		float backNY{ -cosf(angleInRadians) };
+
+		// Half-length of the mirror line
+		float halfLen{ sqrtf(
+			(m_SecondPoint.x - m_FirstPoint.x) * (m_SecondPoint.x - m_FirstPoint.x) +
+			(m_SecondPoint.y - m_FirstPoint.y) * (m_SecondPoint.y - m_FirstPoint.y)
+		) / 2.0f };
+
+		float midX{ (m_FirstPoint.x + m_SecondPoint.x) / 2.0f };
+		float midY{ (m_FirstPoint.y + m_SecondPoint.y) / 2.0f };
+		float domeDepth{ m_Boundaries.width * 0.45f };
+
+		// Build dome polygon: arc from m_FirstPoint -> back -> m_SecondPoint
+		const int arcSteps{ 14 };
+		std::vector<Vector2f> dome;
+		for (int i = 0; i <= arcSteps; ++i)
+		{
+			float t{ static_cast<float>(i) / arcSteps }; // 0 -> 1
+			float a{ piConstant * t };                   // 0 -> PI
+			// cos goes 1 -> -1 along mirror, sin goes 0 -> 0 bulging into back
+			dome.push_back(Vector2f{
+				midX + mirrorDX * halfLen * cosf(a) + backNX * domeDepth * sinf(a),
+				midY + mirrorDY * halfLen * cosf(a) + backNY * domeDepth * sinf(a)
+				});
+		}
+
+		// 1 - solid dark fill
+		utils::SetColor(Color4f{ 0.28f, 0.16f, 0.06f, 1.0f });
+		utils::FillPolygon(dome);
+
+		// 2 - amber outline
+		utils::SetColor(Color4f{ 0.72f, 0.42f, 0.08f, 1.0f });
+		utils::DrawPolygon(dome, false);
+
+		// 4 - bright cyan reflective line on top (front face)
 		utils::SetColor(Color4f{ 0.0f, 0.8f, 1.0f, 1.0f });
-		utils::DrawLine(m_FirstPoint, m_SecondPoint, 2.0f);
+		utils::DrawLine(m_FirstPoint, m_SecondPoint, 3.0f);
 	}
 	else if (m_Type == MirrorType::Receiver)
 	{
 		utils::SetColor(Color4f{ 0.0f, 1.0f, 0.0f, 1.0f });
+		utils::FillEllipse(
+			Vector2f{ m_Boundaries.left + m_Boundaries.width / 2.f,
+					  m_Boundaries.bottom + m_Boundaries.height / 2.f },
+			m_Boundaries.width / 2.f,
+			m_Boundaries.height / 2.f
+		);
 	}
 	else if (m_Type == MirrorType::Splitter)
 	{
@@ -82,27 +120,12 @@ void Mirror::Draw() const
 		utils::SetColor(Color4f{ 1.0f, 1.0f, 1.0f, 1.0f });
 		utils::DrawLine(m_FirstPoint, m_SecondPoint, 2.0f);
 	}
-
-	
-
-	if (m_Type == MirrorType::Receiver)
-	{
-		utils::FillEllipse(Vector2f{ m_Boundaries.left + m_Boundaries.width / 2, m_Boundaries.bottom + m_Boundaries.height / 2 }, m_Boundaries.width / 2, m_Boundaries.height / 2);
-	}
 }
 
-void Mirror::RotateMirror()
+void Mirror::RotateMirror(int direction)
 {
-	if (m_Orientation == MirrorOrientation::BackSlash)
-	{
-		m_Orientation = MirrorOrientation::ForwardSlash;
-		m_TargetAngle = m_TargetAngle - 90.0f;
-	}
-	else
-	{
-		m_Orientation = MirrorOrientation::BackSlash;
-		m_TargetAngle = m_TargetAngle + 90.0f;
-	}
+	// direction: -1 = clockwise (-90deg), +1 = counter-clockwise (+90deg)
+	m_TargetAngle += direction * 90.0f;
 }
 
 void Mirror::Update(float elapsedSeconds)
@@ -131,4 +154,13 @@ void Mirror::Update(float elapsedSeconds)
 bool Mirror::IsRotating() const
 {
 	return std::abs(m_CurrentAngle - m_TargetAngle) > 0.001f;
+}
+
+Vector2f Mirror::GetFrontNormal() const
+{
+	// Mirror line direction: (cos theta, sin theta)
+	// Front normal is 90deg CCW from the line direction: (-sin theta, cos theta)
+	float piConstant{ 3.1415926535f };
+	float angleInRadians{ m_CurrentAngle * piConstant / 180.0f };
+	return Vector2f{ -sinf(angleInRadians), cosf(angleInRadians) };
 }

@@ -14,7 +14,7 @@ public:
 
 	void SetMirror(Mirror* mirror);
 	void DeleteMirror();
-	void RotateMirror();
+	void RotateMirror(int direction);
 	MirrorType GetMirrorType() const;
 
 	void Update(float elapsedSec);
@@ -22,6 +22,7 @@ public:
 	bool HasMirror() const;
 
 	bool GetMirrorPoint(Vector2f& p1Out, Vector2f& p2Out);
+	Vector2f GetMirrorFrontNormal() const;
 
 	bool IsRotating() const;
 
@@ -34,4 +35,3 @@ private:
 	int m_Index{};
 
 };
-

@@ -26,6 +26,7 @@ void Game::Initialize()
 	Color4f white{ 1.f, 1.f, 1.f, 1.f };
 	if (m_pScoreLabel == nullptr) m_pScoreLabel = new Texture("SCORE:", "TypoDigit.otf", 20, white);
 	if (m_pLevelLabel == nullptr) m_pLevelLabel = new Texture("LEVEL:", "TypoDigit.otf", 20, white);
+	if (m_pTimeLabel == nullptr) m_pTimeLabel = new Texture("TIME", "TypoDigit.otf", 16, white);
 
 	ResetGameStats();
 	SetupNewLevel();
@@ -44,6 +45,7 @@ void Game::Cleanup()
 
 	delete m_pScoreLabel;
 	delete m_pLevelLabel;
+	delete m_pTimeLabel;
 	delete m_pGameOverTitle;
 	delete m_pGameOverScoreText;
 	delete m_pGameOverLevelText;
@@ -111,6 +113,29 @@ void Game::Draw() const
 	float startXLabel{ GetViewPort().width - m_pLevelLabel->GetWidth() - 20.0f };
 	m_pLevelLabel->Draw(Vector2f{ startXLabel, GetViewPort().height - 30.0f }, Rectf{});
 
+	// --- Timer background box ---
+	const float pad{ 10.0f };
+	Rectf timerBox
+	{
+		m_TimerBoxRect.left - pad,
+		m_TimerBoxRect.bottom - pad,
+		m_TimerBoxRect.width + pad * 2.0f,
+		m_TimerBoxRect.height + pad * 2.0f
+	};
+
+	// Dark red fill
+	utils::SetColor(Color4f{ 0.12f, 0.03f, 0.03f, 1.0f });
+	utils::FillRect(timerBox);
+
+	// Bright red border
+	utils::SetColor(Color4f{ 0.85f, 0.12f, 0.12f, 1.0f });
+	utils::DrawRect(timerBox, 3.f);
+
+	// "TIME" label centered above the box (y-up: higher y = visually higher)
+	float timeLabelX{ timerBox.left + timerBox.width / 2.0f - m_pTimeLabel->GetWidth() / 2.0f };
+	float timeLabelY{ timerBox.bottom + timerBox.height + 6.0f };
+	m_pTimeLabel->Draw(Vector2f{ timeLabelX, timeLabelY }, Rectf{});
+
 	for (Digit* currentDigit : m_TimerDigits) currentDigit->Draw();
 	for (Digit* currentDigit : m_ScoreDigits) currentDigit->Draw();
 	for (Digit* currentDigit : m_LevelCounterDigits) currentDigit->Draw();
@@ -146,9 +171,15 @@ void Game::ProcessMouseDownEvent(const SDL_MouseButtonEvent& e)
 {
 	if (m_GameState == GameState::Playing)
 	{
+		Vector2f mousePos{ static_cast<float>(e.x), static_cast<float>(e.y) };
+
 		if (e.button == SDL_BUTTON_LEFT)
 		{
-			m_Grid->RotateMirrorAt(Vector2f{ static_cast<float>(e.x), static_cast<float>(e.y) }, m_Center);
+			m_Grid->RotateMirrorAt(mousePos, m_Center, +1); // counter-clockwise
+		}
+		else if (e.button == SDL_BUTTON_RIGHT)
+		{
+			m_Grid->RotateMirrorAt(mousePos, m_Center, -1); // clockwise
 		}
 	}
 }
@@ -218,10 +249,10 @@ void Game::CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirecti
 
 				if (utils::Raycast(mirrorPoints, currentFirstPoint, secondPoint, hitInformation))
 				{
-					m_Laser->AddPoint(hitInformation.intersectPoint);
-
 					if (currentCell->GetMirrorType() == MirrorType::Receiver)
 					{
+						// Receiver is omnidirectional - always counts
+						m_Laser->AddPoint(hitInformation.intersectPoint);
 						hitReceiver = true;
 
 						if (!m_Grid->IsAnyMirrorRotating())
@@ -235,10 +266,25 @@ void Game::CalculateLaserPath(const Vector2f& firstPoint, Vector2f& laserDirecti
 						break;
 					}
 
-					currentLaserDirection = currentLaserDirection.Reflect(hitInformation.normal);
-					currentFirstPoint.x = hitInformation.intersectPoint.x + (currentLaserDirection.x * 3.0f);
-					currentFirstPoint.y = hitInformation.intersectPoint.y + (currentLaserDirection.y * 3.0f);
-					secondPoint = currentFirstPoint;
+					Vector2f frontNormal{ currentCell->GetMirrorFrontNormal() };
+					float dot{ currentLaserDirection.x * frontNormal.x
+							 + currentLaserDirection.y * frontNormal.y };
+
+					if (dot < 0.0f)
+					{
+						// Front hit -> reflect
+						m_Laser->AddPoint(hitInformation.intersectPoint);
+						currentLaserDirection = currentLaserDirection.Reflect(hitInformation.normal);
+						currentFirstPoint.x = hitInformation.intersectPoint.x + (currentLaserDirection.x * 3.0f);
+						currentFirstPoint.y = hitInformation.intersectPoint.y + (currentLaserDirection.y * 3.0f);
+						secondPoint = currentFirstPoint;
+					}
+					else
+					{
+						// Back hit -> laser is absorbed, stops here
+						m_Laser->AddPoint(hitInformation.intersectPoint);
+						break;
+					}
 				}
 			}
 		}
@@ -282,13 +328,13 @@ void Game::ResetGameStats()
 	m_GameTimer = 60.0f;
 
 	m_Score = 0;
-	
+
 	m_LevelsSolved = 0;
 
 	m_DisplayedSeconds = -1;
-	
+
 	m_DisplayedScore = -1;
-	
+
 	m_DisplayedLevels = -1;
 }
 
@@ -339,19 +385,21 @@ void Game::UpdateTimerDigits(int seconds)
 	m_TimerDigits.clear();
 
 	std::string secondsString{ std::to_string(seconds) };
-	float digitWidth{ 40.0f };
-	float digitHeight{ 60.0f };
-	float spacing{ digitWidth + 5.0f };
-	float totalWidth{ secondsString.length() * spacing };
+	const float renderedWidth{ 50.0f };
+	const float digitHeight{ 60.0f };
+	const float spacing{ 45.0f };
+
+	float totalWidth{ (secondsString.length() - 1) * spacing + renderedWidth };
 
 	float startX{ (GetViewPort().width / 2.0f) - (totalWidth / 2.0f) };
-	float startY{ GetViewPort().height - digitHeight - 20.0f };
+	float startY{ GetViewPort().height - digitHeight - 80.0f };
+
+	m_TimerBoxRect = Rectf{ startX, startY, totalWidth, digitHeight };
 
 	for (size_t index{ 0 }; index < secondsString.length(); ++index)
 	{
 		int numberValue{ secondsString[index] - '0' };
-		Vector2f digitPosition{ startX + (index * spacing), startY };
-
+		Vector2f digitPosition{ startX + (index * 45.0f), startY };
 		m_TimerDigits.push_back(new Digit{ numberValue, Digit::Mode::Bright, digitPosition });
 	}
 }

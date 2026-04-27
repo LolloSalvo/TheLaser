@@ -22,7 +22,7 @@ Grid::Grid(int cols, int rows, float cellSize, const Vector2f& center)
 		{
 			Vector2f cellPosition{ startX + (indexCol * m_CellSize), startY + (indexRow * m_CellSize) };
 
-			m_pCells.push_back(new Cell{GetIndex(indexCol, indexRow), cellPosition, cellSize });
+			m_pCells.push_back(new Cell{ GetIndex(indexCol, indexRow), cellPosition, cellSize });
 		}
 	}
 }
@@ -54,7 +54,7 @@ int Grid::GetColFromIndex(int index) const
 
 Vector2f Grid::GetCellCenter(int col, int row) const
 {
-	return Vector2f{ 
+	return Vector2f{
 		m_pCells[GetIndex(col, row)]->GetBoundaries().left + m_CellSize / 2,
 		m_pCells[GetIndex(col, row)]->GetBoundaries().bottom + m_CellSize / 2
 	};
@@ -68,7 +68,7 @@ float Grid::GetCellSize() const
 
 void Grid::Draw() const
 {
-	for(Cell* cell : m_pCells)
+	for (Cell* cell : m_pCells)
 	{
 		cell->Draw();
 	}
@@ -81,7 +81,7 @@ int Grid::GetCellIndexFromPosition(const Vector2f& position, const Vector2f& cen
 
 	float startX{ centerPos.x - (totalWidth / 2) };
 	float startY{ centerPos.y - (totalHeight / 2) };
-	
+
 	int col = static_cast<int>((position.x - startX) / m_CellSize);
 	int row = static_cast<int>((position.y - startY) / m_CellSize);
 
@@ -90,7 +90,7 @@ int Grid::GetCellIndexFromPosition(const Vector2f& position, const Vector2f& cen
 		return -1; // Out of bounds
 	}
 	return GetIndex(col, row);
-	
+
 }
 
 Cell* Grid::GetCellFromPosition(const Vector2f& position, const Vector2f& centerPos) const
@@ -171,13 +171,13 @@ void Grid::AddRemoveMirrorAt(const Vector2f& position, const Vector2f& centerPos
 	}
 }
 
-void Grid::RotateMirrorAt(const Vector2f& position, const Vector2f& centerPos)
+void Grid::RotateMirrorAt(const Vector2f& position, const Vector2f& centerPos, int direction)
 {
 	Cell* currentCell = GetCellFromPosition(position, centerPos);
 
 	if (currentCell != nullptr && currentCell->HasMirror())
 	{
-		currentCell->RotateMirror();
+		currentCell->RotateMirror(direction);
 	}
 }
 
@@ -188,5 +188,3 @@ void Grid::Update(float elapsedSeconds)
 		currentCell->Update(elapsedSeconds);
 	}
 }
-
-

@@ -14,7 +14,7 @@ void Laser::Draw() const
 
 	for (int index{}; index < m_pLaserPoints.size() - 1; ++index)
 	{
-		utils::DrawLine(m_pLaserPoints[index], m_pLaserPoints[index + 1]);
+		utils::DrawLine(m_pLaserPoints[index], m_pLaserPoints[index + 1], 2.f);
 	}
 }
 

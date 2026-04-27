@@ -12,23 +12,23 @@
 class Game : public BaseGame
 {
 public:
-	explicit Game( const Window& window );
+	explicit Game(const Window& window);
 	Game(const Game& other) = delete;
 	Game& operator=(const Game& other) = delete;
-	Game( Game&& other) = delete;
+	Game(Game&& other) = delete;
 	Game& operator=(Game&& other) = delete;
 	// http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rh-override
 	~Game();
 
-	void Update( float elapsedSec ) override;
-	void Draw( ) const override;
+	void Update(float elapsedSec) override;
+	void Draw() const override;
 
 	// Event handling
-	void ProcessKeyDownEvent( const SDL_KeyboardEvent& e ) override;
-	void ProcessKeyUpEvent( const SDL_KeyboardEvent& e ) override;
-	void ProcessMouseMotionEvent( const SDL_MouseMotionEvent& e ) override;
-	void ProcessMouseDownEvent( const SDL_MouseButtonEvent& e ) override;
-	void ProcessMouseUpEvent( const SDL_MouseButtonEvent& e ) override;
+	void ProcessKeyDownEvent(const SDL_KeyboardEvent& e) override;
+	void ProcessKeyUpEvent(const SDL_KeyboardEvent& e) override;
+	void ProcessMouseMotionEvent(const SDL_MouseMotionEvent& e) override;
+	void ProcessMouseDownEvent(const SDL_MouseButtonEvent& e) override;
+	void ProcessMouseUpEvent(const SDL_MouseButtonEvent& e) override;
 
 private:
 
@@ -52,7 +52,7 @@ private:
 	float m_GameTimer{ 60.0f };
 	float m_VictoryTimer{ 0.0f };
 	const float m_MaxVictoryTime{ 0.5f };
-	const float m_TimerIncrement{ 5.0f };
+	const float m_TimerIncrement{ 10.0f };
 
 	float m_LevelTimeElapsed{ 0.0f };
 	int m_Score{ 0 };
@@ -90,9 +90,12 @@ private:
 	// --- TEXTURES HUD & GAME OVER ---
 	Texture* m_pScoreLabel{ nullptr };
 	Texture* m_pLevelLabel{ nullptr };
+	Texture* m_pTimeLabel{ nullptr };
 	Texture* m_pGameOverTitle{ nullptr };
 	Texture* m_pGameOverScoreText{ nullptr };
 	Texture* m_pGameOverLevelText{ nullptr };
+
+	Rectf m_TimerBoxRect{};
 
 	// --- LOGIC FUNCTIONS ---
 	void ResetGameStats();

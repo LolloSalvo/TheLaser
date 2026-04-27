@@ -5,8 +5,8 @@
 Cell::Cell(int index, const Vector2f& position, const float cellSize)
 	: m_Index{ index }
 	, m_Boundaries{ position.x, position.y, cellSize, cellSize }
-	, m_pMirror{nullptr}
-{	
+	, m_pMirror{ nullptr }
+{
 }
 
 void Cell::Draw() const
@@ -62,11 +62,11 @@ bool Cell::GetMirrorPoint(Vector2f& p1Out, Vector2f& p2Out)
 	return false;
 }
 
-void Cell::RotateMirror()
+void Cell::RotateMirror(int direction)
 {
 	if (this->HasMirror())
 	{
-		m_pMirror->RotateMirror();
+		m_pMirror->RotateMirror(direction);
 	}
 }
 
@@ -82,8 +82,12 @@ void Cell::Update(float elapsedSeconds)
 		m_pMirror->Update(elapsedSeconds);
 	}
 }
-bool Cell::IsRotating() const 
+bool Cell::IsRotating() const
 {
 	return m_pMirror->IsRotating();
 }
 
+Vector2f Cell::GetMirrorFrontNormal() const
+{
+	return m_pMirror->GetFrontNormal();
+}
