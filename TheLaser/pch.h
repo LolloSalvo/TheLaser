@@ -1,6 +1,6 @@
 #pragma once
-//ML Detection Extension
-#ifdef _DEBUG
+//ML Detection Extension (MSVC CRT debug heap — Windows only)
+#if defined(_MSC_VER) && defined(_DEBUG)
 #define _CRTDBG_MAP_ALLOC
 #include <cstdlib>
 #include <crtdbg.h>

@@ -6,7 +6,7 @@
 void StartHeapControl();
 void DumpMemoryLeaks();
 
-int SDL_main(int argv, char** args)
+int main(int /*argc*/, char** /*argv*/)
 {
 	srand(static_cast<unsigned int>(time(nullptr)));
 
@@ -23,7 +23,7 @@ int SDL_main(int argv, char** args)
 
 void StartHeapControl()
 {
-#if defined(DEBUG) | defined(_DEBUG)
+#if defined(_MSC_VER) && (defined(DEBUG) || defined(_DEBUG))
 	// Notify user if heap is corrupt
 	HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
 
@@ -37,7 +37,7 @@ void StartHeapControl()
 
 void DumpMemoryLeaks()
 {
-#if defined(DEBUG) | defined(_DEBUG)
+#if defined(_MSC_VER) && (defined(DEBUG) || defined(_DEBUG))
 	_CrtDumpMemoryLeaks();
 #endif
 }
