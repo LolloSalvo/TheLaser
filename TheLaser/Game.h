@@ -6,6 +6,8 @@
 #include "Laser.h"
 #include "LevelGenerator.h"
 #include "Digit.h"
+#include "SoundEffect.h"
+#include "SoundStream.h"
 
 #include <vector>
 
@@ -96,6 +98,14 @@ private:
 	Texture* m_pGameOverLevelText{ nullptr };
 
 	Rectf m_TimerBoxRect{};
+
+	// --- AUDIO ---
+	SoundEffect* m_pSfxClick{ nullptr };
+	SoundEffect* m_pSfxTick{ nullptr };
+	SoundEffect* m_pSfxVictory{ nullptr };
+	SoundEffect* m_pSfxGameOver{ nullptr };
+	SoundStream* m_pMusic{ nullptr };
+	int m_LastTickSecond{ -1 };
 
 	// --- LOGIC FUNCTIONS ---
 	void ResetGameStats();

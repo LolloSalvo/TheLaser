@@ -28,6 +28,14 @@ void Game::Initialize()
 	if (m_pLevelLabel == nullptr) m_pLevelLabel = new Texture("LEVEL:", "TypoDigit.otf", 20, white);
 	if (m_pTimeLabel == nullptr) m_pTimeLabel = new Texture("TIME", "TypoDigit.otf", 16, white);
 
+	m_pSfxClick    = new SoundEffect("click.wav");
+	m_pSfxTick     = new SoundEffect("tick.wav");
+	m_pSfxVictory  = new SoundEffect("victory.wav");
+	m_pSfxGameOver = new SoundEffect("gameover.wav");
+	m_pMusic       = new SoundStream("music.wav");
+	m_pMusic->Play(true);
+	SoundStream::SetVolume(35);
+
 	ResetGameStats();
 	SetupNewLevel();
 }
@@ -49,6 +57,13 @@ void Game::Cleanup()
 	delete m_pGameOverTitle;
 	delete m_pGameOverScoreText;
 	delete m_pGameOverLevelText;
+
+	SoundStream::Stop();
+	delete m_pMusic;
+	delete m_pSfxClick;
+	delete m_pSfxTick;
+	delete m_pSfxVictory;
+	delete m_pSfxGameOver;
 }
 
 void Game::Update(float elapsedSec)
@@ -64,6 +79,7 @@ void Game::Update(float elapsedSec)
 		{
 			m_GameTimer = 0.0f;
 			m_GameState = GameState::GameOver;
+			m_pSfxGameOver->Play(0);
 
 			Color4f red{ 1.0f, 0.2f, 0.2f, 1.0f };
 			Color4f white{ 1.0f, 1.0f, 1.0f, 1.0f };
@@ -78,7 +94,22 @@ void Game::Update(float elapsedSec)
 			m_pGameOverLevelText = new Texture("LEVELS CLEARED: " + std::to_string(m_LevelsSolved), "TypoDigit.otf", 32, white);
 		}
 
+		if (m_GameTimer <= 10.0f && m_GameTimer > 0.0f)
+		{
+			int sec{ static_cast<int>(std::ceil(m_GameTimer)) };
+			if (sec != m_LastTickSecond)
+			{
+				m_pSfxTick->Play(0);
+				m_LastTickSecond = sec;
+			}
+		}
+
+		GameState prevState{ m_GameState };
 		CalculateLaserPath(m_LaserStartPoint, m_LaserDirection);
+		if (prevState == GameState::Playing && m_GameState == GameState::Victory)
+		{
+			m_pSfxVictory->Play(0);
+		}
 	}
 	else if (m_GameState == GameState::Victory)
 	{
@@ -176,10 +207,12 @@ void Game::ProcessMouseDownEvent(const SDL_MouseButtonEvent& e)
 		if (e.button == SDL_BUTTON_LEFT)
 		{
 			m_Grid->RotateMirrorAt(mousePos, m_Center, +1); // counter-clockwise
+			m_pSfxClick->Play(0);
 		}
 		else if (e.button == SDL_BUTTON_RIGHT)
 		{
 			m_Grid->RotateMirrorAt(mousePos, m_Center, -1); // clockwise
+			m_pSfxClick->Play(0);
 		}
 	}
 }
@@ -344,6 +377,7 @@ void Game::SetupNewLevel()
 
 	m_VictoryTimer = 0.0f;
 	m_LevelTimeElapsed = 0.0f;
+	m_LastTickSecond = -1;
 
 	ChooseRandomStartPosition();
 
