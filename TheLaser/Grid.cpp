@@ -148,6 +148,13 @@ void Grid::AddReceiver(int col, int row)
 	m_pCells[cellIndex]->SetMirror(new Mirror{ cellBoundaries, MirrorType::Receiver });
 }
 
+void Grid::AddReceiverBlue(int col, int row)
+{
+	int cellIndex = GetIndex(col, row);
+	Rectf cellBoundaries = m_pCells[cellIndex]->GetBoundaries();
+	m_pCells[cellIndex]->SetMirror(new Mirror{ cellBoundaries, MirrorType::ReceiverBlue });
+}
+
 void Grid::RemoveMirror(int col, int row)
 {
 	m_pCells[GetIndex(col, row)]->DeleteMirror();

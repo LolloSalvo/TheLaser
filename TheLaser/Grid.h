@@ -30,6 +30,7 @@ public:
 	void AddRemoveMirrorAt(const Vector2f& position, const Vector2f& centerPos);
 	void RotateMirrorAt(const Vector2f& position, const Vector2f& centerPos, int direction);
 	void AddReceiver(int col, int row);
+	void AddReceiverBlue(int col, int row);
 
 	void Update(float elapsedSeconds);
 

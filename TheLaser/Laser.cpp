@@ -9,10 +9,13 @@ Laser::Laser()
 
 void Laser::Draw() const
 {
-	const Color4f red{ 1.f, 0.f, 0.f, 1.f };
-	utils::SetColor(red);
+	Draw(Color4f{ 1.f, 0.f, 0.f, 1.f });
+}
 
-	for (int index{}; index < m_pLaserPoints.size() - 1; ++index)
+void Laser::Draw(const Color4f& color) const
+{
+	utils::SetColor(color);
+	for (int index{}; index < static_cast<int>(m_pLaserPoints.size()) - 1; ++index)
 	{
 		utils::DrawLine(m_pLaserPoints[index], m_pLaserPoints[index + 1], 2.f);
 	}

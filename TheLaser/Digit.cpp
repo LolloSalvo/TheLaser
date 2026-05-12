@@ -3,8 +3,6 @@
 
 #include "utils.h"
 
-#include <iostream>
-
 Texture* Digit::m_SpriteSheet{};
 int Digit::m_NumInstances{ 0 };
 
@@ -20,7 +18,6 @@ Digit::Digit(int number, Mode mode, Vector2f position)
 	if (m_SpriteSheet == nullptr)
 	{
 		m_SpriteSheet = new Texture{ "numbers.png" };
-		std::cout << "Larghezza SpriteSheet: " << m_SpriteSheet->GetWidth() << std::endl;
 	}
 
 	m_NumInstances++;
@@ -39,7 +36,6 @@ Digit::Digit(int number, Mode mode, Vector2f position, Color4f color)
 	if (m_SpriteSheet == nullptr)
 	{
 		m_SpriteSheet = new Texture{ "numbers.png" };
-		std::cout << "Larghezza SpriteSheet: " << m_SpriteSheet->GetWidth() << std::endl;
 	}
 
 	m_NumInstances++;

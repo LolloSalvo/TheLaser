@@ -6,7 +6,7 @@
 Mirror::Mirror(const Rectf& cellBoundaries, MirrorType type)
 	: m_Boundaries{ cellBoundaries }
 	, m_Type{ type }
-	, m_RotationSpeed{ 200.0f }
+	, m_RotationSpeed{ 250.0f }
 {
 	// Random start: either 45deg (/) or 135deg (\)
 	int randomOrientation{ rand() % 2 };
@@ -102,13 +102,29 @@ void Mirror::Draw() const
 	}
 	else if (m_Type == MirrorType::Receiver)
 	{
-		utils::SetColor(Color4f{ 0.0f, 1.0f, 0.0f, 1.0f });
-		utils::FillEllipse(
-			Vector2f{ m_Boundaries.left + m_Boundaries.width / 2.f,
-					  m_Boundaries.bottom + m_Boundaries.height / 2.f },
-			m_Boundaries.width / 2.f,
-			m_Boundaries.height / 2.f
-		);
+		// Red receiver for laser 1 - draw circle with red fill and bright outline
+		Vector2f center{ m_Boundaries.left + m_Boundaries.width / 2.f,
+						 m_Boundaries.bottom + m_Boundaries.height / 2.f };
+		float rx{ m_Boundaries.width / 2.f };
+		float ry{ m_Boundaries.height / 2.f };
+
+		utils::SetColor(Color4f{ 0.6f, 0.05f, 0.05f, 1.0f });
+		utils::FillEllipse(center, rx, ry);
+		utils::SetColor(Color4f{ 1.0f, 0.15f, 0.15f, 1.0f });
+		utils::DrawEllipse(center, rx, ry, 2.5f);
+	}
+	else if (m_Type == MirrorType::ReceiverBlue)
+	{
+		// Blue receiver for laser 2
+		Vector2f center{ m_Boundaries.left + m_Boundaries.width / 2.f,
+						 m_Boundaries.bottom + m_Boundaries.height / 2.f };
+		float rx{ m_Boundaries.width / 2.f };
+		float ry{ m_Boundaries.height / 2.f };
+
+		utils::SetColor(Color4f{ 0.05f, 0.10f, 0.55f, 1.0f });
+		utils::FillEllipse(center, rx, ry);
+		utils::SetColor(Color4f{ 0.15f, 0.45f, 1.0f, 1.0f });
+		utils::DrawEllipse(center, rx, ry, 2.5f);
 	}
 	else if (m_Type == MirrorType::Splitter)
 	{

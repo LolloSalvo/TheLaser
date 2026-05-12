@@ -31,6 +31,12 @@ Rectf Cell::GetBoundaries() const
 
 void Cell::SetMirror(Mirror* mirror)
 {
+	// Always delete the old mirror before replacing it to prevent memory corruption
+	if (m_pMirror != nullptr)
+	{
+		delete m_pMirror;
+		m_pMirror = nullptr;
+	}
 	m_pMirror = mirror;
 }
 
@@ -42,52 +48,43 @@ void Cell::DeleteMirror()
 
 bool Cell::HasMirror() const
 {
-	if (m_pMirror != nullptr)
-	{
-		return true;
-	}
-	return false;
+	return m_pMirror != nullptr;
 }
 
 bool Cell::GetMirrorPoint(Vector2f& p1Out, Vector2f& p2Out)
 {
-	if (this->HasMirror())
-	{
-		p1Out = m_pMirror->GetFirstPoint();
-		p2Out = m_pMirror->GetSecondPoint();
-
-		return true;
-	}
-
-	return false;
+	if (m_pMirror == nullptr) return false;
+	p1Out = m_pMirror->GetFirstPoint();
+	p2Out = m_pMirror->GetSecondPoint();
+	return true;
 }
 
 void Cell::RotateMirror(int direction)
 {
-	if (this->HasMirror())
-	{
+	if (m_pMirror != nullptr)
 		m_pMirror->RotateMirror(direction);
-	}
 }
 
 MirrorType Cell::GetMirrorType() const
 {
+	if (m_pMirror == nullptr) return MirrorType::Reflector;
 	return m_pMirror->GetType();
 }
 
 void Cell::Update(float elapsedSeconds)
 {
 	if (m_pMirror != nullptr)
-	{
 		m_pMirror->Update(elapsedSeconds);
-	}
 }
+
 bool Cell::IsRotating() const
 {
+	if (m_pMirror == nullptr) return false;
 	return m_pMirror->IsRotating();
 }
 
 Vector2f Cell::GetMirrorFrontNormal() const
 {
+	if (m_pMirror == nullptr) return Vector2f{ 0.f, 1.f };
 	return m_pMirror->GetFrontNormal();
 }

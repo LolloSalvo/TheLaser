@@ -4,7 +4,8 @@
 enum class MirrorType
 {
 	Reflector,
-	Receiver,
+	Receiver,      // red - for laser 1
+	ReceiverBlue,  // blue - for laser 2
 	Splitter,
 	OneWay
 };
